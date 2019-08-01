@@ -34,3 +34,10 @@
 precompiled/*
 !precompiled/.gitkeep
 .idea/*
+
+outs/*
+!outs/.gitkeep
+
+models/*
+!models/.gitkeep
+__pycache__/*

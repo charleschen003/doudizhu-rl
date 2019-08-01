@@ -8,10 +8,29 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from collections import Counter, deque
+import logging
+import time
+import os
 
 sys.path.insert(0, 'precompiled')
 import r
 from env import Env as CEnv
+
+WORK_DIR, _ = os.path.split(os.path.abspath(__file__))
+lt = time.localtime(time.time())
+BEGIN = '{:0>2d}{:0>2d}_{:0>2d}{:0>2d}'.format(
+    lt.tm_mon, lt.tm_mday, lt.tm_hour, lt.tm_min)
+
+
+def fn():
+    res = os.path.join(WORK_DIR, 'outs', '{}.log'.format(BEGIN))
+    return res
+
+
+logger = logging.getLogger('DDZ_RL')
+logger.setLevel(logging.INFO)
+logging.basicConfig(filename=fn(), filemode='w',
+                    format='[%(asctime)s][%(name)s][%(levelname)s]:  %(message)s')
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -42,7 +61,7 @@ class Env(CEnv):
                 name = '农民1'
             else:
                 name = '农民2'
-            print('{} 出牌： {}，分别剩余： {}'.format(
+            logger.info('{} 出牌： {}，分别剩余： {}'.format(
                 name, self.cards2str(cards), self.left))
 
     def step_manual(self, onehot_cards):
@@ -135,13 +154,13 @@ class Net(nn.Module):
     def __init__(self):
         # input shape: 3 * 15 * 4
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(3, 32, (1, 1), (1, 4))
-        self.conv2 = nn.Conv2d(3, 32, (1, 2), (1, 4))
-        self.conv3 = nn.Conv2d(3, 32, (1, 3), (1, 4))
-        self.conv4 = nn.Conv2d(3, 32, (1, 4), (1, 4))
+        self.conv1 = nn.Conv2d(3, 64, (1, 1), (1, 4))
+        self.conv2 = nn.Conv2d(3, 64, (1, 2), (1, 4))
+        self.conv3 = nn.Conv2d(3, 64, (1, 3), (1, 4))
+        self.conv4 = nn.Conv2d(3, 64, (1, 4), (1, 4))
         self.convs = (self.conv1, self.conv2, self.conv3, self.conv4)
-        self.fc1 = nn.Linear(32 * 15 * 4, 64)
-        self.fc2 = nn.Linear(64, 1)
+        self.fc1 = nn.Linear(64 * 15 * 4, 128)
+        self.fc2 = nn.Linear(128, 1)
 
     def forward(self, face, actions):
         """
@@ -157,8 +176,25 @@ class Net(nn.Module):
         x = torch.cat([f(state_action) for f in self.convs], -1)
         x = x.view(actions.shape[0], -1)
         x = F.relu(self.fc1(x))
-        x = self.fc2(x)
+        x = torch.tanh(self.fc2(x))
         return x
+
+    def save(self, name, folder=None):
+        if folder is None:
+            folder = os.path.join(WORK_DIR, 'models')
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        path = os.path.join(folder, name)
+        torch.save(self.state_dict(), path)
+
+    def load(self, name, folder=None):
+        if folder is None:
+            folder = os.path.join(WORK_DIR, 'models')
+        path = os.path.join(folder, name)
+        map_location = 'cpu' if DEVICE.type == 'cpu' else 'gpu'
+        static_dict = torch.load(path, map_location)
+        self.load_state_dict(static_dict)
+        self.eval()
 
 
 class CQL:
@@ -234,10 +270,12 @@ class CQL:
 def lord_ai_play():
     env = Env(debug=False)
     lord = CQL()
+    max_win = -1
     total_lord_win, total_farmer_win = 0, 0
     recent_lord_win, recent_farmer_win = 0, 0
     start_time = time.time()
     for episode in range(1, conf.EPISODE + 1):
+        print(episode)
         env.reset()
         env.prepare()
         r = 0
@@ -247,7 +285,7 @@ def lord_ai_play():
             action = lord.e_greedy_action(state, env.valid_actions)
             _, r, _ = env.step_manual(action)
             if r == -1:  # 地主赢
-                reward = 100
+                reward = 1
             else:
                 _, r, _ = env.step_auto()  # 下家
                 if r == 0:
@@ -255,7 +293,7 @@ def lord_ai_play():
                 if r == 0:
                     reward = 0
                 else:  # r == 1，地主输
-                    reward = -100
+                    reward = -1
             done = (r != 0)
             if done:
                 next_action = torch.zeros((15, 4), dtype=torch.float).to(DEVICE)
@@ -273,12 +311,16 @@ def lord_ai_play():
 
         if episode % 100 == 0:
             end_time = time.time()
-            print('Last 100 rounds takes {:.2f}seconds\n'
-                  '\tLord recent 100 win rate：{:.2%}\n'
-                  '\tLord total {} win rate: {:.2%}\n\n'
-                  .format(end_time - start_time,
-                          recent_lord_win / 100,
-                          episode, total_lord_win / episode))
+            logger.info('Last 100 rounds takes {:.2f}seconds\n'
+                        '\tLord recent 100 win rate: {:.2%}\n'
+                        '\tLord total {} win rate: {:.2%}\n\n'
+                        .format(end_time - start_time,
+                                recent_lord_win / 100,
+                                episode, total_lord_win / episode))
+            if recent_lord_win > max_win:
+                max_win = recent_lord_win
+                lord.policy_net.save('{}_{}_{}.bin'
+                                     .format(BEGIN, episode, max_win))
             recent_lord_win, recent_farmer_win = 0, 0
             start_time = time.time()
 
