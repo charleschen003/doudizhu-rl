@@ -7,9 +7,6 @@ BATCH_SIZE = 32  # size of minibatch
 DECAY = 200  # epsilon decay config
 UPDATE_TARGET_EVERY = 20  # target-net参数更新频率
 
-
-EPISODE = 3000  # Episode limitation
-
 CARDS = range(3, 18)
 STR = [str(i) for i in range(3, 11)] + ['J', 'Q', 'K', 'A', '2', '小', '大']
 DICT = dict(zip(CARDS, STR))

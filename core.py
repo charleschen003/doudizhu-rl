@@ -267,14 +267,14 @@ class CQL:
                        np.exp(-1.0 * self.time_step / conf.DECAY)
 
 
-def lord_ai_play():
+def lord_ai_play(total=3000):
     env = Env(debug=False)
     lord = CQL()
     max_win = -1
     total_lord_win, total_farmer_win = 0, 0
     recent_lord_win, recent_farmer_win = 0, 0
     start_time = time.time()
-    for episode in range(1, conf.EPISODE + 1):
+    for episode in range(1, total + 1):
         print(episode)
         env.reset()
         env.prepare()
