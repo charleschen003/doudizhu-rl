@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+precompiled/*
+!precompiled/.gitkeep
+.idea/*
