@@ -154,13 +154,17 @@ class Net(nn.Module):
     def __init__(self):
         # input shape: 3 * 15 * 4
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(3, 64, (1, 1), (1, 4))
-        self.conv2 = nn.Conv2d(3, 64, (1, 2), (1, 4))
-        self.conv3 = nn.Conv2d(3, 64, (1, 3), (1, 4))
-        self.conv4 = nn.Conv2d(3, 64, (1, 4), (1, 4))
+        self.conv1 = nn.Conv2d(3, 128, (1, 1), (1, 4))  # 64 * 15 * 1
+        self.conv2 = nn.Conv2d(3, 128, (1, 2), (1, 4))
+        self.conv3 = nn.Conv2d(3, 128, (1, 3), (1, 4))
+        self.conv4 = nn.Conv2d(3, 128, (1, 4), (1, 4))
         self.convs = (self.conv1, self.conv2, self.conv3, self.conv4)
-        self.fc1 = nn.Linear(64 * 15 * 4, 128)
-        self.fc2 = nn.Linear(128, 1)
+        # 128 * 15 * 4
+        self.pool = nn.Conv2d(128, 128, (1, 4), (1, 4))
+
+        # 128 * 15 * 1
+        self.fc1 = nn.Linear(128 * 15, 256)
+        self.fc2 = nn.Linear(256, 1)
 
     def forward(self, face, actions):
         """
@@ -174,9 +178,10 @@ class Net(nn.Module):
         state_action = torch.cat((face, actions), dim=1)
 
         x = torch.cat([f(state_action) for f in self.convs], -1)
+        x = self.pool(x)
         x = x.view(actions.shape[0], -1)
         x = F.relu(self.fc1(x))
-        x = torch.tanh(self.fc2(x))
+        x = self.fc2(x)
         return x
 
     def save(self, name, folder=None):
@@ -200,7 +205,6 @@ class Net(nn.Module):
 class CQL:
     def __init__(self):
         super(CQL, self).__init__()
-        self.time_step = 0
         self.epsilon = conf.EPSILON_HIGH
         self.replay_buffer = deque(maxlen=conf.REPLAY_SIZE)
 
@@ -213,7 +217,7 @@ class CQL:
         self.replay_buffer.append((
             state, action, reward, next_state, next_action, done))
         if len(self.replay_buffer) < conf.BATCH_SIZE:
-            return
+            return None
 
         # training
         samples = random.sample(self.replay_buffer, conf.BATCH_SIZE)
@@ -230,11 +234,11 @@ class CQL:
         y_pred = self.policy_net(s0, a0)
 
         loss = nn.MSELoss()(y_true, y_pred)
+        res = loss.item()
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-        if self.time_step % conf.UPDATE_TARGET_EVERY == 0:
-            self.target_net.load_state_dict(self.policy_net.state_dict())
+        return res
 
     def e_greedy_action(self, face, actions):
         """
@@ -247,8 +251,6 @@ class CQL:
             idx = np.random.randint(0, actions.shape[0])
         else:
             idx = torch.argmax(q_value).item()
-        self.time_step += 1
-        self._update_epsilon()
         return actions[idx]
 
     def greedy_action(self, face, actions):
@@ -261,20 +263,26 @@ class CQL:
         idx = torch.argmax(q_value).item()
         return actions[idx]
 
-    def _update_epsilon(self):
+    def update_epsilon(self, episode):
         self.epsilon = conf.EPSILON_LOW + \
                        (conf.EPSILON_HIGH - conf.EPSILON_LOW) * \
-                       np.exp(-1.0 * self.time_step / conf.DECAY)
+                       np.exp(-1.0 * episode / conf.DECAY)
+
+    def update_target(self, episode):
+        if episode % conf.UPDATE_TARGET_EVERY == 0:
+            self.target_net.load_state_dict(self.policy_net.state_dict())
 
 
 def lord_ai_play(total=3000):
     env = Env(debug=False)
     lord = CQL()
     max_win = -1
+    total_loss, loss_times = 0, 0
     total_lord_win, total_farmer_win = 0, 0
     recent_lord_win, recent_farmer_win = 0, 0
     start_time = time.time()
     for episode in range(1, total + 1):
+        print(episode)
         env.reset()
         env.prepare()
         r = 0
@@ -284,7 +292,7 @@ def lord_ai_play(total=3000):
             action = lord.e_greedy_action(state, env.valid_actions)
             _, r, _ = env.step_manual(action)
             if r == -1:  # 地主赢
-                reward = 1
+                reward = 100
             else:
                 _, r, _ = env.step_auto()  # 下家
                 if r == 0:
@@ -292,13 +300,16 @@ def lord_ai_play(total=3000):
                 if r == 0:
                     reward = 0
                 else:  # r == 1，地主输
-                    reward = -1
+                    reward = -100
             done = (r != 0)
             if done:
                 next_action = torch.zeros((15, 4), dtype=torch.float).to(DEVICE)
             else:
                 next_action = lord.greedy_action(env.face, env.valid_actions)
-            lord.perceive(state, action, reward, env.face, next_action, done)
+            loss = lord.perceive(state, action, reward, env.face, next_action, done)
+            if loss is not None:
+                loss_times += 1
+                total_loss += loss
 
         # print(env.left)
         if r == -1:
@@ -312,16 +323,21 @@ def lord_ai_play(total=3000):
             end_time = time.time()
             logger.info('Last 100 rounds takes {:.2f}seconds\n'
                         '\tLord recent 100 win rate: {:.2%}\n'
-                        '\tLord total {} win rate: {:.2%}\n\n'
+                        '\tLord total {} win rate: {:.2%}\n'
+                        '\tMean Loss: {:.2f}\n\n'
                         .format(end_time - start_time,
                                 recent_lord_win / 100,
-                                episode, total_lord_win / episode))
+                                episode, total_lord_win / episode,
+                                total_loss / (loss_times+0.001)))
             if recent_lord_win > max_win:
                 max_win = recent_lord_win
                 lord.policy_net.save('{}_{}_{}.bin'
                                      .format(BEGIN, episode, max_win))
+            total_loss, loss_times = 0, 0
             recent_lord_win, recent_farmer_win = 0, 0
             start_time = time.time()
+        lord.update_epsilon(episode)
+        lord.update_target(episode)
 
 
 if __name__ == '__main__':
