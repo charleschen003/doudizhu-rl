@@ -61,8 +61,9 @@ class Env(CEnv):
                 name = '农民1'
             else:
                 name = '农民2'
-            logger.info('{} 出牌： {}，分别剩余： {}'.format(
+            print('{} 出牌： {}，分别剩余： {}'.format(
                 name, self.cards2str(cards), self.left))
+            input()
 
     def step_manual(self, onehot_cards):
         role = self.get_role_ID() - 1
@@ -78,6 +79,12 @@ class Env(CEnv):
         self._update(role, cards)
         return cards, r, _
 
+    def step_random(self):
+        actions = self.valid_actions(tensor=False)
+        cards = self.arr2cards(random.choice(actions))
+        self._update(self.get_role_ID() - 1, cards)
+        return super(Env, self).step_manual(cards)
+
     @property
     def face(self):
         """
@@ -87,8 +94,7 @@ class Env(CEnv):
         face = [handcards, self.taken]
         return torch.tensor(self.batch_arr2onehot(face), dtype=torch.float).to(DEVICE)
 
-    @property
-    def valid_actions(self):
+    def valid_actions(self, tensor=True):
         """
         :return:  batch_size * 15 * 4 的可行动作集合
         """
@@ -102,7 +108,11 @@ class Env(CEnv):
             last = []
         last = self.cards2arr(last)
         actions = r.get_moves(handcards, last)
-        return torch.tensor(self.batch_arr2onehot(actions), dtype=torch.float).to(DEVICE)
+        if tensor:
+            return torch.tensor(self.batch_arr2onehot(actions),
+                                dtype=torch.float).to(DEVICE)
+        else:
+            return actions
 
     @classmethod
     def arr2cards(cls, arr):
@@ -273,8 +283,8 @@ class CQL:
             self.target_net.load_state_dict(self.policy_net.state_dict())
 
 
-def lord_ai_play(total=3000):
-    env = Env(debug=False)
+def lord_ai_play(total=3000, debug=False):
+    env = Env(debug=debug)
     lord = CQL()
     max_win = -1
     total_loss, loss_times = 0, 0
@@ -288,14 +298,14 @@ def lord_ai_play(total=3000):
         while r == 0:  # r == -1 地主赢， r == 1，农民赢
             # lord first
             state = env.face
-            action = lord.e_greedy_action(state, env.valid_actions)
+            action = lord.e_greedy_action(state, env.valid_actions())
             _, r, _ = env.step_manual(action)
             if r == -1:  # 地主赢
                 reward = 100
             else:
-                _, r, _ = env.step_auto()  # 下家
+                _, r, _ = env.step_random()  # 下家
                 if r == 0:
-                    _, r, _ = env.step_auto()  # 上家
+                    _, r, _ = env.step_random()  # 上家
                 if r == 0:
                     reward = 0
                 else:  # r == 1，地主输
@@ -304,7 +314,7 @@ def lord_ai_play(total=3000):
             if done:
                 next_action = torch.zeros((15, 4), dtype=torch.float).to(DEVICE)
             else:
-                next_action = lord.greedy_action(env.face, env.valid_actions)
+                next_action = lord.greedy_action(env.face, env.valid_actions())
             loss = lord.perceive(state, action, reward, env.face, next_action, done)
             if loss is not None:
                 loss_times += 1
@@ -340,4 +350,4 @@ def lord_ai_play(total=3000):
 
 
 if __name__ == '__main__':
-    lord_ai_play()
+    lord_ai_play(debug=True)
