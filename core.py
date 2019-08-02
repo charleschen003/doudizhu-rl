@@ -173,6 +173,7 @@ class Net(nn.Module):
         self.pool = nn.Conv2d(128, 128, (1, 4), (1, 4))
 
         # 128 * 15 * 1
+        self.drop = nn.Dropout(0.5)
         self.fc1 = nn.Linear(128 * 15, 256)
         self.fc2 = nn.Linear(256, 1)
 
@@ -190,6 +191,7 @@ class Net(nn.Module):
         x = torch.cat([f(state_action) for f in self.convs], -1)
         x = self.pool(x)
         x = x.view(actions.shape[0], -1)
+        x = self.drop(x)
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return x
@@ -287,11 +289,13 @@ def lord_ai_play(total=3000, debug=False):
     env = Env(debug=debug)
     lord = CQL()
     max_win = -1
+    win_rate_list = []
     total_loss, loss_times = 0, 0
     total_lord_win, total_farmer_win = 0, 0
     recent_lord_win, recent_farmer_win = 0, 0
     start_time = time.time()
     for episode in range(1, total + 1):
+        print(episode)
         env.reset()
         env.prepare()
         done = False
@@ -339,6 +343,7 @@ def lord_ai_play(total=3000, debug=False):
                 max_win = recent_lord_win
                 lord.policy_net.save('{}_{}_{}.bin'
                                      .format(BEGIN, episode, max_win))
+            win_rate_list.append(recent_lord_win)
             total_loss, loss_times = 0, 0
             recent_lord_win, recent_farmer_win = 0, 0
             start_time = time.time()
