@@ -301,12 +301,16 @@ def lord_ai_play(total=3000, debug=False):
             action = lord.e_greedy_action(state, env.valid_actions())
             _, done, _ = env.step_manual(action)
             if done:  # 地主结束本局，地主赢
+                total_lord_win += 1
+                recent_lord_win += 1
                 reward = 100
             else:
                 _, done, _ = env.step_random()  # 下家
                 if not done:
                     _, done, _ = env.step_random()  # 上家
                 if done:  # 农民结束本局，地主输
+                    total_farmer_win += 1
+                    recent_farmer_win += 1
                     reward = -100
                 else:  # 未结束，无奖励
                     reward = 0
@@ -320,12 +324,6 @@ def lord_ai_play(total=3000, debug=False):
                 total_loss += loss
 
         # print(env.left)
-        if r == -1:
-            total_lord_win += 1
-            recent_lord_win += 1
-        else:
-            total_farmer_win += 1
-            recent_farmer_win += 1
 
         if episode % 100 == 0:
             end_time = time.time()
