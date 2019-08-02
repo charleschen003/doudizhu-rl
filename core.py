@@ -294,23 +294,22 @@ def lord_ai_play(total=3000, debug=False):
     for episode in range(1, total + 1):
         env.reset()
         env.prepare()
-        r = 0
-        while r == 0:  # r == -1 地主赢， r == 1，农民赢
+        done = False
+        while not done:  # r == -1 地主赢， r == 1，农民赢
             # lord first
             state = env.face
             action = lord.e_greedy_action(state, env.valid_actions())
-            _, r, _ = env.step_manual(action)
-            if r == -1:  # 地主赢
+            _, done, _ = env.step_manual(action)
+            if done:  # 地主结束本局，地主赢
                 reward = 100
             else:
-                _, r, _ = env.step_random()  # 下家
-                if r == 0:
-                    _, r, _ = env.step_random()  # 上家
-                if r == 0:
-                    reward = 0
-                else:  # r == 1，地主输
+                _, done, _ = env.step_random()  # 下家
+                if not done:
+                    _, done, _ = env.step_random()  # 上家
+                if done:  # 农民结束本局，地主输
                     reward = -100
-            done = (r != 0)
+                else:  # 未结束，无奖励
+                    reward = 0
             if done:
                 next_action = torch.zeros((15, 4), dtype=torch.float).to(DEVICE)
             else:
