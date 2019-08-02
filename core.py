@@ -1,5 +1,6 @@
 import sys
 import time
+import json
 import config as conf
 import torch
 import random
@@ -9,7 +10,6 @@ import torch.nn.functional as F
 import torch.optim as optim
 from collections import Counter, deque
 import logging
-import time
 import os
 
 sys.path.insert(0, 'precompiled')
@@ -347,9 +347,12 @@ def lord_ai_play(total=3000, debug=False):
             total_loss, loss_times = 0, 0
             recent_lord_win, recent_farmer_win = 0, 0
             start_time = time.time()
+        if episode % 1000 == 0:
+            with open('outs/{}.json'.format(BEGIN), 'w') as f:
+                json.dump(win_rate_list, f)
         lord.update_epsilon(episode)
         lord.update_target(episode)
 
 
 if __name__ == '__main__':
-    lord_ai_play(debug=True)
+    lord_ai_play(debug=False)
