@@ -295,7 +295,6 @@ def lord_ai_play(total=3000, debug=False):
     recent_lord_win, recent_farmer_win = 0, 0
     start_time = time.time()
     for episode in range(1, total + 1):
-        print(episode)
         env.reset()
         env.prepare()
         done = False
@@ -355,4 +354,4 @@ def lord_ai_play(total=3000, debug=False):
 
 
 if __name__ == '__main__':
-    lord_ai_play(debug=False)
+    lord_ai_play(debug=True)
