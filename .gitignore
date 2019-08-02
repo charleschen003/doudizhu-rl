@@ -37,7 +37,8 @@ precompiled/*
 
 outs/*
 !outs/.gitkeep
-
 models/*
 !models/.gitkeep
+images/*
+!images/.gitkeep
 __pycache__/*
