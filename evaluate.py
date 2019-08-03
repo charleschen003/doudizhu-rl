@@ -1,5 +1,5 @@
 import time
-from core_v0 import Env, CQL
+from core_v1 import Env, CQL
 
 
 def fight_with(policy, total=200, debug=True):
@@ -11,7 +11,7 @@ def fight_with(policy, total=200, debug=True):
     else:
         step = env.step_auto
     lord = CQL()
-    lord.policy_net.load('0802_1036_78500_44.bin')
+    lord.policy_net.load('0803_0159/8000.bin')
     win_rate_list = []
     total_lord_win, total_farmer_win = 0, 0
     recent_lord_win, recent_farmer_win = 0, 0
@@ -54,4 +54,4 @@ def fight_with(policy, total=200, debug=True):
 
 
 if __name__ == '__main__':
-    fight_with('random', debug=False)
+    fight_with('dhcp', total=1000, debug=False)
