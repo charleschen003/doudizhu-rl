@@ -2,7 +2,7 @@ import sys
 
 sys.path.insert(0, 'precompiled')
 
-import config as conf
+import config_v0 as conf
 from env import Env as CEnv
 
 

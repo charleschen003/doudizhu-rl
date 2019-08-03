@@ -1,7 +1,7 @@
 import sys
 import time
 import json
-import config as conf
+import config_v1 as conf
 import torch
 import random
 import numpy as np
@@ -43,6 +43,7 @@ class Env(CEnv):
             super(Env, self).__init__()
         self.taken = np.zeros((15,))
         self.left = np.array([17, 20, 17], dtype=np.int)
+        self.old_cards = None
         self.debug = debug
 
     def reset(self):
@@ -57,6 +58,7 @@ class Env(CEnv):
         if self.debug:
             if role == 1:
                 name = '地主'
+                print('地主剩牌: {}'.format(self.cards2str(self.old_cards)))
             elif role == 0:
                 name = '农民1'
             else:
@@ -88,17 +90,20 @@ class Env(CEnv):
     @property
     def face(self):
         """
-        :return:  2 * 15 * 4 的数组，作为当前状态
+        :return:  4 * 15 * 4 的数组，作为当前状态
         """
         handcards = self.cards2arr(self.get_curr_handcards())
-        face = [handcards, self.taken]
-        return torch.tensor(self.batch_arr2onehot(face), dtype=torch.float).to(DEVICE)
+        known = self.batch_arr2onehot([handcards, self.taken])
+        prob = self.get_state_prob().reshape(2, 15, 4)
+        face = np.concatenate((known, prob))
+        return torch.tensor(face, dtype=torch.float).to(DEVICE)
 
     def valid_actions(self, tensor=True):
         """
         :return:  batch_size * 15 * 4 的可行动作集合
         """
-        handcards = self.cards2arr(self.get_curr_handcards())
+        self.old_cards = self.get_curr_handcards()
+        handcards = self.cards2arr(self.old_cards)
         last_two = self.get_last_two_cards()
         if last_two[0]:
             last = last_two[0]
@@ -162,12 +167,12 @@ class Env(CEnv):
 
 class Net(nn.Module):
     def __init__(self):
-        # input shape: 3 * 15 * 4
+        # input shape: 5 * 15 * 4
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(3, 128, (1, 1), (1, 4))  # 64 * 15 * 1
-        self.conv2 = nn.Conv2d(3, 128, (1, 2), (1, 4))
-        self.conv3 = nn.Conv2d(3, 128, (1, 3), (1, 4))
-        self.conv4 = nn.Conv2d(3, 128, (1, 4), (1, 4))
+        self.conv1 = nn.Conv2d(5, 128, (1, 1), (1, 4))  # 64 * 15 * 1
+        self.conv2 = nn.Conv2d(5, 128, (1, 2), (1, 4))
+        self.conv3 = nn.Conv2d(5, 128, (1, 3), (1, 4))
+        self.conv4 = nn.Conv2d(5, 128, (1, 4), (1, 4))
         self.convs = (self.conv1, self.conv2, self.conv3, self.conv4)
         # 128 * 15 * 4
         self.pool = nn.Conv2d(128, 128, (1, 4), (1, 4))
@@ -179,7 +184,7 @@ class Net(nn.Module):
 
     def forward(self, face, actions):
         """
-        :param face: 当前状态  2 * 15 * 4
+        :param face: 当前状态  4 * 15 * 4
         :param actions: 所有动作 batch_size * 15 * 4
         :return:
         """
@@ -202,6 +207,9 @@ class Net(nn.Module):
         if not os.path.exists(folder):
             os.makedirs(folder)
         path = os.path.join(folder, name)
+        dirname = os.path.dirname(path)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
         torch.save(self.state_dict(), path)
 
     def load(self, name, folder=None):
@@ -308,9 +316,9 @@ def lord_ai_play(total=3000, debug=False):
                 recent_lord_win += 1
                 reward = 100
             else:
-                _, done, _ = env.step_auto()  # 下家
+                _, done, _ = env.step_random()  # 下家
                 if not done:
-                    _, done, _ = env.step_auto()  # 上家
+                    _, done, _ = env.step_random()  # 上家
                 if done:  # 农民结束本局，地主输
                     total_farmer_win += 1
                     recent_farmer_win += 1
@@ -340,7 +348,7 @@ def lord_ai_play(total=3000, debug=False):
                                 total_loss / (loss_times+0.001)))
             if recent_lord_win > max_win:
                 max_win = recent_lord_win
-                lord.policy_net.save('{}_{}_{}.bin'
+                lord.policy_net.save('{}/{}_{}.bin'
                                      .format(BEGIN, episode, max_win))
             win_rate_list.append(recent_lord_win)
             total_loss, loss_times = 0, 0
@@ -349,9 +357,10 @@ def lord_ai_play(total=3000, debug=False):
         if episode % 1000 == 0:
             with open('outs/{}.json'.format(BEGIN), 'w') as f:
                 json.dump(win_rate_list, f)
+            lord.policy_net.save('{}/{}.bin'.format(BEGIN, episode))
         lord.update_epsilon(episode)
         lord.update_target(episode)
 
 
 if __name__ == '__main__':
-    lord_ai_play(debug=True)
+    lord_ai_play(debug=False)
