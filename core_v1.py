@@ -316,9 +316,9 @@ def lord_ai_play(total=3000, debug=False):
                 recent_lord_win += 1
                 reward = 100
             else:
-                _, done, _ = env.step_random()  # 下家
+                _, done, _ = env.step_auto()  # 下家
                 if not done:
-                    _, done, _ = env.step_random()  # 上家
+                    _, done, _ = env.step_auto()  # 上家
                 if done:  # 农民结束本局，地主输
                     total_farmer_win += 1
                     recent_farmer_win += 1
