@@ -69,12 +69,12 @@ def test_2():
 
 def test_3():
     for policy in ['dhcp', 'random']:
-        for model in ['0804_1423_2400_49', '0804_1423_3700_54',
-                      '0804_1423_6000']:
+        for model in ['0804_1423_2900_52', '0804_1423_8000']:
             fight_with(policy, net.NetComplicated, dqn.DQNFirst, model,
                        total=1000, debug=False)
 
 
 if __name__ == '__main__':
     # TODO 根据model自行确定要调用的net 和dqn
-    test_3()
+    fight_with('dhcp', net.NetComplicated, dqn.DQNFirst,
+               '0804_1045_4600_57', total=1000, debug=True)
