@@ -100,3 +100,13 @@ class NetComplicated(Net):
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return x
+
+
+class NetMoreComplicated(Net):
+    def __init__(self):  # TODO 支持y用户历史输入
+        # input shape: ?
+        super(Net, self).__init__()
+        pass
+
+    def forward(self, face, actions):
+        pass

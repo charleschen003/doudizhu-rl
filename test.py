@@ -51,7 +51,7 @@ def fight_with(policy, net_cls, dqn_cls, model, total, debug=True):
             start_time = time.time()
 
 
-def test_1():
+def e1():
     for policy in ['random', 'dhcp']:
         for model in ['0804_0112_2700_51', '0804_0112_3800_53',
                       '0804_0112_4500_57']:
@@ -59,7 +59,7 @@ def test_1():
                        total=1000, debug=False)
 
 
-def test_2():
+def e2():
     for policy in ['dhcp', 'random']:
         for model in ['0804_0245_2800_48', '0804_0245_3500_53',
                       '0804_0245_4600_57']:
@@ -67,7 +67,7 @@ def test_2():
                        total=1000, debug=False)
 
 
-def test_3():
+def e3():
     for policy in ['dhcp', 'random']:
         for model in ['0804_1423_2900_52', '0804_1423_8000']:
             fight_with(policy, net.NetComplicated, dqn.DQNFirst, model,
@@ -75,6 +75,6 @@ def test_3():
 
 
 if __name__ == '__main__':
-    # TODO 根据model自行确定要调用的net 和dqn
+    # TODO 根据model自行确定要调用的 net 和 dqn
     fight_with('dhcp', net.NetComplicated, dqn.DQNFirst,
                '0804_1045_4600_57', total=1000, debug=True)
