@@ -53,7 +53,8 @@ def record(up, lord, down):
         json.dump(data, f)
 
 
-def train_from_scratch(net_cls, dqn_cls, total=3000, debug=False):
+def train_from_scratch(net_cls, dqn_cls, total=50000, debug=False):
+    conf.DECAY = int((16000 * (2 / 3)) / 5)
     global LORD_TOTAL_LOSS, DOWN_TOTAL_LOSS, UP_TOTAL_LOSS
     global LORD_LOSS_COUNT, DOWN_LOSS_COUNT, UP_LOSS_COUNT
     up_all = lord_all = down_all = 0
@@ -166,8 +167,8 @@ def train_from_scratch(net_cls, dqn_cls, total=3000, debug=False):
             reset_loss()
             start_time = time.time()
         if episode % 1000 == 0:
-            lord.policy_net.save('{}_lord_{}'.format(BEGIN, episode), 3)
-            down.policy_net.save('{}_down_{}'.format(BEGIN, episode), 3)
+            lord.policy_net.save('{}_lord_scratch{}'.format(BEGIN, episode), 3)
+            down.policy_net.save('{}_down_scratch{}'.format(BEGIN, episode), 3)
             up.policy_net.save('{}_up_{}'.format(BEGIN, episode), 3)
         lord.update_epsilon(episode)
         lord.update_target(episode)
@@ -177,7 +178,7 @@ def train_from_scratch(net_cls, dqn_cls, total=3000, debug=False):
         up.update_target(episode)
 
 
-def train_from_model(models, net_cls, dqn_cls, total=3000, debug=False):
+def train_from_model(models, net_cls, dqn_cls, total=6000, debug=False):
     global LORD_TOTAL_LOSS, DOWN_TOTAL_LOSS, UP_TOTAL_LOSS
     global LORD_LOSS_COUNT, DOWN_LOSS_COUNT, UP_LOSS_COUNT
     up_all = lord_all = down_all = 0
@@ -219,11 +220,11 @@ def train_from_model(models, net_cls, dqn_cls, total=3000, debug=False):
                 if down_s0 is not None:  # 非春天走完
                     # 下家得到负反馈
                     down_a1 = torch.zeros((15, 4), dtype=torch.float).to(conf.DEVICE)
-                    down_loss = down.perceive(down_s0, down_a0, -50, env.face, down_a1, done)
+                    down_loss = down.perceive(down_s0, down_a0, -100, env.face, down_a1, done)
                     check_loss('down', down_loss)
                     # 上家得到负反馈
                     up_a1 = torch.zeros((15, 4), dtype=torch.float).to(conf.DEVICE)
-                    up_loss = up.perceive(up_s0, up_a0, -50, env.face, up_a1, done)
+                    up_loss = up.perceive(up_s0, up_a0, -100, env.face, up_a1, done)
                     check_loss('up', up_loss)
                 # 自己得到正反馈
                 lord_a1 = torch.zeros((15, 4), dtype=torch.float).to(conf.DEVICE)
@@ -245,7 +246,7 @@ def train_from_model(models, net_cls, dqn_cls, total=3000, debug=False):
             else:  # 本局结束，农民胜利
                 # 上家得到正反馈
                 up_a1 = torch.zeros((15, 4), dtype=torch.float).to(conf.DEVICE)
-                up_loss = up.perceive(up_s0, up_a0, 50, env.face, up_a1, done)
+                up_loss = up.perceive(up_s0, up_a0, 100, env.face, up_a1, done)
                 check_loss('up', up_loss)
 
                 # 地主得到负反馈
@@ -255,7 +256,7 @@ def train_from_model(models, net_cls, dqn_cls, total=3000, debug=False):
 
                 # 自己得到正反馈
                 down_a1 = torch.zeros((15, 4), dtype=torch.float).to(conf.DEVICE)
-                down_loss = down.perceive(down_s0, down_a0, 50, env.face, down_a1, done)
+                down_loss = down.perceive(down_s0, down_a0, 100, env.face, down_a1, done)
                 check_loss('down', down_loss)
                 down_recent += 1
                 down_all += 1
@@ -276,11 +277,11 @@ def train_from_model(models, net_cls, dqn_cls, total=3000, debug=False):
                 check_loss('lord', lord_loss)
                 # 下家得到正反馈
                 down_a1 = torch.zeros((15, 4), dtype=torch.float).to(conf.DEVICE)
-                down_loss = down.perceive(down_s0, down_a0, 50, env.face, down_a1, done)
+                down_loss = down.perceive(down_s0, down_a0, 100, env.face, down_a1, done)
                 check_loss('down', down_loss)
                 # 自己得到正反馈
                 up_a1 = torch.zeros((15, 4), dtype=torch.float).to(conf.DEVICE)
-                up_loss = up.perceive(up_s0, up_a0, 50, env.face, up_a1, done)
+                up_loss = up.perceive(up_s0, up_a0, 100, env.face, up_a1, done)
                 check_loss('up', up_loss)
                 up_recent += 1
                 up_all += 1
@@ -301,9 +302,9 @@ def train_from_model(models, net_cls, dqn_cls, total=3000, debug=False):
             up_recent = lord_recent = down_recent = 0
             reset_loss()
             start_time = time.time()
-        if episode % 10000 == 0:
-            lord.policy_net.save('{}_lord_{}'.format(BEGIN, episode), 3)
-            down.policy_net.save('{}_down_{}'.format(BEGIN, episode), 3)
+        if episode % 1000 == 0:
+            lord.policy_net.save('{}_lord_model_{}'.format(BEGIN, episode), 3)
+            down.policy_net.save('{}_down_model_{}'.format(BEGIN, episode), 3)
             up.policy_net.save('{}_up_{}'.format(BEGIN, episode), 3)
         lord.update_epsilon(episode)
         lord.update_target(episode)
