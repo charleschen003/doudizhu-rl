@@ -28,8 +28,8 @@ WIN_DIR = os.path.join(WORK_DIR, 'outs', 'win_rates')
 ENV_DIR = os.path.join(WORK_DIR, 'precompiled')
 
 
-def name_dir(name):
-    return os.path.join(*name.split('_', 2))
+def name_dir(name, max_split=2):
+    return os.path.join(*name.split('_', max_split))
 
 
 def get_logger():

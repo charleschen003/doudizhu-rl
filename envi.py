@@ -12,7 +12,7 @@ from env import Env as CEnv
 
 
 class Env(CEnv):
-    def __init__(self, debug=False, seed=None):
+    def __init__(self, debug=False, seed=None, manual_peasant=False):
         if seed:
             super(Env, self).__init__(seed=seed)
         else:
@@ -21,6 +21,7 @@ class Env(CEnv):
         self.left = np.array([17, 20, 17], dtype=np.int)
         self.old_cards = None
         self.debug = debug
+        self.manual_peasant = manual_peasant
 
     def reset(self):
         super(Env, self).reset()
@@ -32,17 +33,24 @@ class Env(CEnv):
         for card, count in Counter(cards - 3).items():
             self.taken[card] += count
         if self.debug:
+            char = '$'
             if role == 1:
+                char = '#'
                 name = '地主'
-                print('地主剩牌: {}'.format(self.cards2str(self.old_cards)))
+                print('\n# 地主手牌: {}'.format(self.cards2str(self.old_cards)))
                 input()
             elif role == 0:
-                name = '农民1'
+                name = '上家'
+                if self.manual_peasant:
+                    print('\n$ 上家手牌: {}'.format(self.cards2str(self.old_cards)))
+                    input()
             else:
-                name = '农民2'
-            print('{} 出牌： {}，分别剩余： {}'.format(
-                name, self.cards2str(cards), self.left))
-            input()
+                name = '下家'
+                if self.manual_peasant:
+                    print('\n$ 下家手牌: {}'.format(self.cards2str(self.old_cards)))
+                    input()
+            print('{} {}出牌： {}，分别剩余： {}'.format(
+                char, name, self.cards2str(cards), self.left))
 
     def step_manual(self, onehot_cards):
         role = self.get_role_ID() - 1

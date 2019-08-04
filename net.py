@@ -9,19 +9,19 @@ import config as conf
 
 
 class Net(nn.Module, ABC):
-    def save(self, name):
-        path = os.path.join(conf.MODEL_DIR, conf.name_dir(name))
+    def save(self, name, max_split=2):
+        path = os.path.join(conf.MODEL_DIR, conf.name_dir(name, max_split))
         dirname = os.path.dirname(path)
         if not os.path.exists(dirname):
             os.makedirs(dirname)
         path = '{}.pt'.format(path)
         torch.save(self.state_dict(), path)
 
-    def load(self, name=None, abspath=None):
+    def load(self, name=None, abspath=None, max_split=2):
         if abspath:
             path = abspath
         else:
-            path = os.path.join(conf.MODEL_DIR, conf.name_dir(name))
+            path = os.path.join(conf.MODEL_DIR, conf.name_dir(name, max_split))
             path = '{}.pt'.format(path)
         map_location = 'cpu' if conf.DEVICE.type == 'cpu' else 'gpu'
         static_dict = torch.load(path, map_location)
