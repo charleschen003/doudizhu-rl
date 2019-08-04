@@ -154,9 +154,9 @@ def train_from_scratch(net_cls, dqn_cls, total=3000, debug=False):
         if episode % 100 == 0:
             end_time = time.time()
             logger.info('Last 100 rounds takes {:.2f}seconds\n'
-                        '\tUp   recent/total win: {}/{} [{:.2%}]\n'
-                        '\tLord recent/total win: {}/{} [{:.2%}]\n'
-                        '\tDown recent/total win: {}/{} [{:.2%}]\n'
+                        '\tUp   recent/total win: {}/{} [{:.2f}]\n'
+                        '\tLord recent/total win: {}/{} [{:.2f}]\n'
+                        '\tDown recent/total win: {}/{} [{:.2f}]\n'
                         .format(end_time - start_time,
                                 up_recent, up_all, UP_TOTAL_LOSS / (UP_LOSS_COUNT + 1e-3),
                                 lord_recent, lord_all, LORD_TOTAL_LOSS / (LORD_LOSS_COUNT + 1e-3),
