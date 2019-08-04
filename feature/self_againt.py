@@ -161,8 +161,8 @@ def train_from_scratch(net_cls, dqn_cls, total=3000, debug=False):
                                 up_recent, up_all, UP_TOTAL_LOSS / (UP_LOSS_COUNT + 1e-3),
                                 lord_recent, lord_all, LORD_TOTAL_LOSS / (LORD_LOSS_COUNT + 1e-3),
                                 down_recent, down_all, DOWN_TOTAL_LOSS / (DOWN_LOSS_COUNT + 1e-3)))
-            up_recent = lord_recent = down_recent = 0
             record(up_recent, lord_recent, down_recent)
+            up_recent = lord_recent = down_recent = 0
             reset_loss()
             start_time = time.time()
         if episode % 10000 == 0:
@@ -297,8 +297,8 @@ def train_from_model(models, net_cls, dqn_cls, total=3000, debug=False):
                                 up_recent, up_all, UP_TOTAL_LOSS / (UP_LOSS_COUNT + 1e-3),
                                 lord_recent, lord_all, LORD_TOTAL_LOSS / (LORD_LOSS_COUNT + 1e-3),
                                 down_recent, down_all, DOWN_TOTAL_LOSS / (DOWN_LOSS_COUNT + 1e-3)))
-            up_recent = lord_recent = down_recent = 0
             record(up_recent, lord_recent, down_recent)
+            up_recent = lord_recent = down_recent = 0
             reset_loss()
             start_time = time.time()
         if episode % 10000 == 0:
