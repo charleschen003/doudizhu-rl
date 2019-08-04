@@ -14,7 +14,7 @@ def plot(fn):
         data = json.load(f)
     y = np.array(data) / 100
     plt.plot(y, alpha=0.3)
-    sm = gaussian_filter1d(y, sigma=10)
+    sm = gaussian_filter1d(y, sigma=3)
     plt.plot(sm)
     plt.title('地主胜率走势')
     plt.xlabel('训练总百次数')
@@ -24,4 +24,4 @@ def plot(fn):
 
 
 if __name__ == '__main__':
-    plot('0803_0525')
+    plot('0804_0112')

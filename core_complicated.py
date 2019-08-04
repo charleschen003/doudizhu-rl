@@ -59,7 +59,6 @@ class Env(CEnv):
             if role == 1:
                 name = '地主'
                 print('地主剩牌: {}'.format(self.cards2str(self.old_cards)))
-                input()
             elif role == 0:
                 name = '农民1'
             else:
@@ -175,9 +174,10 @@ class Net(nn.Module):
         self.conv3 = nn.Conv2d(5, 256, (1, 3), (1, 4))
         self.conv4 = nn.Conv2d(5, 256, (1, 4), (1, 4))
         self.convs = (self.conv1, self.conv2, self.conv3, self.conv4)  # 256 * 15 * 4
+        self.conv_shunzi = nn.Conv2d(5, 256, (15, 1), 1)  # 256 * 1 * 4
         self.pool = nn.MaxPool2d((1, 4))  # 256 * 15 * 1
         self.drop = nn.Dropout(0.5)
-        self.fc1 = nn.Linear(256 * 15, 256)
+        self.fc1 = nn.Linear(256 * (15 + 4), 256)
         self.fc2 = nn.Linear(256, 1)
 
     def forward(self, face, actions):
@@ -194,6 +194,10 @@ class Net(nn.Module):
         x = torch.cat([f(state_action) for f in self.convs], -1)
         x = self.pool(x)
         x = x.view(actions.shape[0], -1)
+
+        x_shunzi = self.conv_shunzi(state_action).view(actions.shape[0], -1)
+        x = torch.cat([x, x_shunzi], -1)
+
         x = self.drop(x)
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
@@ -301,6 +305,7 @@ def lord_ai_play(total=3000, debug=False):
     recent_lord_win, recent_farmer_win = 0, 0
     start_time = time.time()
     for episode in range(1, total + 1):
+        print(episode)
         env.reset()
         env.prepare()
         done = False
