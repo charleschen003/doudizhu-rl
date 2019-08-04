@@ -52,7 +52,7 @@ def train(net_cls, dqn_cls, total=3000, debug=False):
                 total_loss += loss
 
         # print(env.left)
-        if episode % 1 == 0:
+        if episode % 100 == 0:
             end_time = time.time()
             logger.info('Last 100 rounds takes {:.2f}seconds\n'
                         '\tLord recent 100 win rate: {:.2%}\n'
@@ -69,7 +69,7 @@ def train(net_cls, dqn_cls, total=3000, debug=False):
             total_loss, loss_times = 0, 0
             recent_lord_win, recent_farmer_win = 0, 0
             start_time = time.time()
-        if episode % 10 == 0:
+        if episode % 1000 == 0:
             path = os.path.join(conf.WIN_DIR, conf.name_dir(BEGIN))
             dirname = os.path.dirname(path)
             if not os.path.exists(dirname):
