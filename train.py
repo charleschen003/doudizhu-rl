@@ -18,7 +18,7 @@ def train(net_cls, dqn_cls, total=3000, debug=False):
     recent_lord_win, recent_farmer_win = 0, 0
     start_time = time.time()
     for episode in range(1, total + 1):
-        print(episode)
+        # print(episode)
         env.reset()
         env.prepare()
         done = False

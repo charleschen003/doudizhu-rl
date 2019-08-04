@@ -7,7 +7,7 @@ def rule_play():
     rule = RuleBasedModel()
     total_lord_win, total_farmer_win = 0, 0
     for episode in range(1, 3000 + 1):
-        print(episode)
+        # print(episode)
         env.reset()
         env.prepare()
         r = 0
