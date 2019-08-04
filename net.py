@@ -23,7 +23,7 @@ class Net(nn.Module, ABC):
         else:
             path = os.path.join(conf.MODEL_DIR, conf.name_dir(name, max_split))
             path = '{}.pt'.format(path)
-        map_location = 'cpu' if conf.DEVICE.type == 'cpu' else 'gpu'
+        map_location = 'cpu' if conf.DEVICE.type == 'cpu' else None
         static_dict = torch.load(path, map_location)
         self.load_state_dict(static_dict)
         self.eval()
