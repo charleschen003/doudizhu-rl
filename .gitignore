@@ -42,3 +42,4 @@ models/*
 images/*
 !images/.gitkeep
 __pycache__/*
+backup/*

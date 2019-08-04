@@ -2,7 +2,6 @@ import sys
 
 sys.path.insert(0, 'precompiled')
 
-import config_v0 as conf
 from env import Env as CEnv
 
 
@@ -11,7 +10,7 @@ def random_play():
     env = CEnv()
     total_lord_win, total_farmer_win = 0, 0
     lord_win, farmer_win = 0, 0
-    for episode in range(1, conf.EPISODE + 1):
+    for episode in range(1, 3000 + 1):
         if episode % 100 == 0:
             print('-----------------------------'
                   'Lord win rate: \n'

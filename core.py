@@ -1,7 +1,7 @@
 import sys
 import time
 import json
-import config_v1 as conf
+import config as conf
 import torch
 import random
 import numpy as np
@@ -12,11 +12,11 @@ from collections import Counter, deque
 import logging
 import os
 
-sys.path.insert(0, 'precompiled')
+WORK_DIR, _ = os.path.split(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(WORK_DIR, 'precompiled'))
 import r
 from env import Env as CEnv
 
-WORK_DIR, _ = os.path.split(os.path.abspath(__file__))
 lt = time.localtime(time.time())
 BEGIN = '{:0>2d}{:0>2d}_{:0>2d}{:0>2d}'.format(
     lt.tm_mon, lt.tm_mday, lt.tm_hour, lt.tm_min)
@@ -169,17 +169,14 @@ class Net(nn.Module):
     def __init__(self):
         # input shape: 5 * 15 * 4
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(5, 128, (1, 1), (1, 4))  # 64 * 15 * 1
-        self.conv2 = nn.Conv2d(5, 128, (1, 2), (1, 4))
-        self.conv3 = nn.Conv2d(5, 128, (1, 3), (1, 4))
-        self.conv4 = nn.Conv2d(5, 128, (1, 4), (1, 4))
-        self.convs = (self.conv1, self.conv2, self.conv3, self.conv4)
-        # 128 * 15 * 4
-        self.pool = nn.Conv2d(128, 128, (1, 4), (1, 4))
-
-        # 128 * 15 * 1
+        self.conv1 = nn.Conv2d(5, 256, (1, 1), (1, 4))  # 256 * 15 * 1
+        self.conv2 = nn.Conv2d(5, 256, (1, 2), (1, 4))
+        self.conv3 = nn.Conv2d(5, 256, (1, 3), (1, 4))
+        self.conv4 = nn.Conv2d(5, 256, (1, 4), (1, 4))
+        self.convs = (self.conv1, self.conv2, self.conv3, self.conv4)  # 256 * 15 * 4
+        self.pool = nn.MaxPool2d((1, 4))  # 256 * 15 * 1
         self.drop = nn.Dropout(0.5)
-        self.fc1 = nn.Linear(128 * 15, 256)
+        self.fc1 = nn.Linear(256 * 15, 256)
         self.fc2 = nn.Linear(256, 1)
 
     def forward(self, face, actions):
@@ -345,7 +342,7 @@ def lord_ai_play(total=3000, debug=False):
                         .format(end_time - start_time,
                                 recent_lord_win / 100,
                                 episode, total_lord_win / episode,
-                                total_loss / (loss_times+0.001)))
+                                total_loss / (loss_times + 0.001)))
             if recent_lord_win > max_win:
                 max_win = recent_lord_win
                 lord.policy_net.save('{}/{}_{}.bin'

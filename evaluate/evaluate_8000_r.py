@@ -1,8 +1,8 @@
 import time
-from core_v1 import Env, CQL
+from core import Env, CQL
 
 
-def fight_with(policy, total=200, debug=True):
+def fight_with(policy, model, total=200, debug=True):
     assert policy in {'random', 'dhcp'}
     env = Env(debug=debug)
     print('Fight with {}'.format(policy))
@@ -11,7 +11,7 @@ def fight_with(policy, total=200, debug=True):
     else:
         step = env.step_auto
     lord = CQL()
-    lord.policy_net.load('0803_0159/8000.bin')
+    lord.policy_net.load('{}.bin'.format(model))
     win_rate_list = []
     total_lord_win, total_farmer_win = 0, 0
     recent_lord_win, recent_farmer_win = 0, 0
@@ -28,7 +28,6 @@ def fight_with(policy, total=200, debug=True):
             if done:  # 地主结束本局，地主赢
                 total_lord_win += 1
                 recent_lord_win += 1
-                reward = 100
             else:
                 _, done, _ = step()  # 下家
                 if not done:
@@ -36,9 +35,6 @@ def fight_with(policy, total=200, debug=True):
                 if done:  # 农民结束本局，地主输
                     total_farmer_win += 1
                     recent_farmer_win += 1
-                    reward = -100
-                else:  # 未结束，无奖励
-                    reward = 0
 
         if episode % 10 == 0:
             end_time = time.time()
@@ -54,4 +50,4 @@ def fight_with(policy, total=200, debug=True):
 
 
 if __name__ == '__main__':
-    fight_with('dhcp', total=1000, debug=False)
+    fight_with('random', '0803_0349/8000', total=1000, debug=False)
