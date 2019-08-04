@@ -39,7 +39,7 @@ outs/*
 !outs/.gitkeep
 models/*
 !models/.gitkeep
-images/*
-!images/.gitkeep
+outs/images/*
+!outs/images/.gitkeep
 __pycache__/*
 backup/*

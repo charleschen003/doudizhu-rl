@@ -1,9 +1,8 @@
-import rule_utils.card as card
-from rule_utils.card import action_space, Category, action_space_category
+import rule_based.utils.card as card
+from rule_based.utils.card import action_space, Category, action_space_category
 import numpy as np
 from collections import Counter
 import tensorflow as tf
-import argparse
 import time
 from contextlib import contextmanager
 
@@ -26,10 +25,10 @@ def counter_subset(list1, list2):
 # map char cards to 3 - 17
 def to_value(cards):
     if isinstance(cards, list) or isinstance(cards, np.ndarray):
-        values = [card.Card.cards.index(c)+3 for c in cards]
+        values = [card.Card.cards.index(c) + 3 for c in cards]
         return values
     else:
-        return card.Card.cards.index(cards)+3
+        return card.Card.cards.index(cards) + 3
 
 
 # map 3 - 17 to char cards
@@ -37,10 +36,10 @@ def to_char(cards):
     if isinstance(cards, list) or isinstance(cards, np.ndarray):
         if len(cards) == 0:
             return []
-        chars = [card.Card.cards[c-3] for c in cards]
+        chars = [card.Card.cards[c - 3] for c in cards]
         return chars
     else:
-        return card.Card.cards[cards-3]
+        return card.Card.cards[cards - 3]
 
 
 def get_mask(cards, action_space, last_cards=None):
@@ -56,7 +55,7 @@ def get_mask(cards, action_space, last_cards=None):
         return mask
     if len(last_cards) > 0:
         for j in range(1, mask.size):
-            if mask[j] == 1 and not card.CardGroup.to_cardgroup(action_space[j]).\
+            if mask[j] == 1 and not card.CardGroup.to_cardgroup(action_space[j]). \
                     bigger_than(card.CardGroup.to_cardgroup(last_cards)):
                 mask[j] = 0
     # else:
@@ -78,10 +77,11 @@ def get_mask_onehot60(cards, action_space, last_cards):
         return mask
     if len(last_cards) > 0:
         for j in range(1, len(action_space)):
-            if np.sum(mask[j]) > 0 and not card.CardGroup.to_cardgroup(action_space[j]).\
+            if np.sum(mask[j]) > 0 and not card.CardGroup.to_cardgroup(action_space[j]). \
                     bigger_than(card.CardGroup.to_cardgroup(last_cards)):
                 mask[j] = np.zeros([60])
     return mask
+
 
 # # get char cards, return valid response
 # def get_mask_category(cards, action_space, last_cards=None):
@@ -110,6 +110,7 @@ def get_seq_length(category, cards_val):
         return cards_val.size // 5
     return None
 
+
 # get [-1, 1] minor cards target, input: value cards 3-17
 def find_minor_in_three_one(cards):
     if cards[0] == cards[1]:
@@ -117,11 +118,13 @@ def find_minor_in_three_one(cards):
     else:
         return cards[0]
 
+
 def find_minor_in_three_two(cards):
     if cards[1] == cards[2]:
         return cards[-1]
     else:
         return cards[0]
+
 
 def find_minor_in_three_one_line(cards):
     cnt = np.zeros([18])
@@ -133,6 +136,7 @@ def find_minor_in_three_one_line(cards):
             minor.append(i)
     return np.array(minor)
 
+
 def find_minor_in_three_two_line(cards):
     cnt = np.zeros([18])
     for i in range(len(cards)):
@@ -142,6 +146,7 @@ def find_minor_in_three_two_line(cards):
         if cnt[i] == 2:
             minor.append(i)
     return np.array(minor)
+
 
 def find_minor_in_four_two(cards):
     cnt = np.zeros([18])
@@ -153,24 +158,25 @@ def find_minor_in_four_two(cards):
             minor.append(i)
     return np.array(minor)
 
+
 def get_minor_cards(cards, category_idx):
     minor_cards = np.ones([15])
     length = 0
     if category_idx == Category.THREE_ONE.value:
         length = 1
-        minor_cards[find_minor_in_three_one(cards)-3] = -1
+        minor_cards[find_minor_in_three_one(cards) - 3] = -1
     if category_idx == Category.THREE_TWO.value:
         length = 1
-        minor_cards[find_minor_in_three_two(cards)-3] = -1
+        minor_cards[find_minor_in_three_two(cards) - 3] = -1
     if category_idx == Category.THREE_ONE_LINE.value:
         length = int(cards.size / 4)
-        minor_cards[find_minor_in_three_one_line(cards)-3] = -1
+        minor_cards[find_minor_in_three_one_line(cards) - 3] = -1
     if category_idx == Category.THREE_TWO_LINE.value:
         length = int(cards.size / 5)
-        minor_cards[find_minor_in_three_two_line(cards)-3] = -1
+        minor_cards[find_minor_in_three_two_line(cards) - 3] = -1
     if category_idx == Category.FOUR_TWO.value:
         length = 2
-        minor_cards[find_minor_in_four_two(cards)-3] = -1
+        minor_cards[find_minor_in_four_two(cards) - 3] = -1
     return minor_cards, length
 
 
@@ -195,7 +201,7 @@ def get_feature_state(env, mask=None):
         m = mask[i]
         if m:
             a = action_space[i]
-            
+
             if not a:
                 features[i, 1] = 1
                 continue
@@ -268,21 +274,21 @@ def train_fake_action(targets, handcards, s, sess, network, category_idx, main_c
         target_val = card.Card.char2value_3_17(target) - 3
         input_single, input_pair, input_triple, input_quadric = get_masks(handcards, None)
 
-        _, response_active_output, fake_loss = sess.run([network.optimize_fake, 
-            network.fc_response_minor_output,
-            network.minor_response_loss],
-                feed_dict = {
-                    network.input_state: s,
-                    network.input_single: np.reshape(input_single, [1, -1]),
-                    network.input_pair: np.reshape(input_pair, [1, -1]),
-                    network.input_triple: np.reshape(input_triple, [1, -1]),
-                    network.input_quadric: np.reshape(input_quadric, [1, -1]),
-                    network.input_single_last: np.zeros([1, 15]),
-                    network.input_pair_last: np.zeros([1, 13]),
-                    network.input_triple_last: np.zeros([1, 13]),
-                    network.input_quadric_last: np.zeros([1, 13]),
-                    network.minor_response_input: np.array([target_val]),
-            })
+        _, response_active_output, fake_loss = sess.run([network.optimize_fake,
+                                                         network.fc_response_minor_output,
+                                                         network.minor_response_loss],
+                                                        feed_dict={
+                                                            network.input_state: s,
+                                                            network.input_single: np.reshape(input_single, [1, -1]),
+                                                            network.input_pair: np.reshape(input_pair, [1, -1]),
+                                                            network.input_triple: np.reshape(input_triple, [1, -1]),
+                                                            network.input_quadric: np.reshape(input_quadric, [1, -1]),
+                                                            network.input_single_last: np.zeros([1, 15]),
+                                                            network.input_pair_last: np.zeros([1, 13]),
+                                                            network.input_triple_last: np.zeros([1, 13]),
+                                                            network.input_quadric_last: np.zeros([1, 13]),
+                                                            network.minor_response_input: np.array([target_val]),
+                                                        })
         cards = [target]
         handcards.remove(target)
         if is_pair:
@@ -331,10 +337,10 @@ def train_fake_action_60(targets, handcards, s, sess, network, category_idx, mai
         target_val = card.Card.char2value_3_17(target) - 3
         _, fc_minor_response_output = sess.run([network.optimize[-1],
                                                 network.fc_minor_response_output], feed_dict={
-                            network.input_state: s.reshape(1, -1),
-                            network.minor_type: np.array([minor_type]),
-                            network.minor_response_input: np.array([target_val])
-                        })
+            network.input_state: s.reshape(1, -1),
+            network.minor_type: np.array([minor_type]),
+            network.minor_response_input: np.array([target_val])
+        })
         cards = [target]
         handcards.remove(target)
         if is_pair:
@@ -372,29 +378,29 @@ def test_fake_action(targets, handcards, s, sess, network, category_idx, dup_mas
         target_val = card.Card.char2value_3_17(target) - 3
         input_single, input_pair, input_triple, input_quadric = get_masks(handcards, None)
         response_minor_output = sess.run(network.fc_response_minor_output,
-                feed_dict = {
-                    network.input_state: s,
-                    network.input_single: np.reshape(input_single, [1, -1]),
-                    network.input_pair: np.reshape(input_pair, [1, -1]),
-                    network.input_triple: np.reshape(input_triple, [1, -1]),
-                    network.input_quadric: np.reshape(input_quadric, [1, -1])
-            })
+                                         feed_dict={
+                                             network.input_state: s,
+                                             network.input_single: np.reshape(input_single, [1, -1]),
+                                             network.input_pair: np.reshape(input_pair, [1, -1]),
+                                             network.input_triple: np.reshape(input_triple, [1, -1]),
+                                             network.input_quadric: np.reshape(input_quadric, [1, -1])
+                                         })
         # give minor cards
         response_minor_output = response_minor_output[0]
         response_minor_output[dup_mask == 0] = -1
-        
+
         if is_pair:
             # fix dimension mismatch
             input_pair = np.concatenate([input_pair, [0, 0]])
             response_minor_output[input_pair == 0] = -1
         else:
             response_minor_output[input_single == 0] = -1
-        
+
         response_minor = np.argmax(response_minor_output)
         dup_mask[response_minor] = 0
 
         # convert network output to char cards
-        cards =[target]
+        cards = [target]
         handcards.remove(target)
         if is_pair:
             handcards.remove(target)
@@ -419,7 +425,7 @@ def pick_minor_targets(category, cards_char):
         return cards_char[-length:]
     if category == Category.THREE_TWO_LINE.value:
         length = len(cards_char) // 5
-        return cards_char[-length*2::2]
+        return cards_char[-length * 2::2]
     if category == Category.FOUR_TWO.value:
         return cards_char[-2:]
     return None
@@ -435,11 +441,11 @@ def pick_main_cards(category, cards_char):
         return cards_char[:-length]
     if category == Category.THREE_TWO_LINE.value:
         length = len(cards_char) // 5
-        return cards_char[:-length*2]
+        return cards_char[:-length * 2]
     if category == Category.FOUR_TWO.value:
         return cards_char[:-2]
     return None
-    
+
 
 def get_mask_alter(cards, last_cards, last_cards_category):
     decision_mask = None
@@ -484,7 +490,7 @@ def get_mask_alter(cards, last_cards, last_cards_category):
         response_mask = np.zeros([15])
         subspace = action_space_category[last_cards_category]
         for j in range(len(subspace)):
-            if counter_subset(subspace[j], cards) and card.CardGroup.to_cardgroup(subspace[j]).\
+            if counter_subset(subspace[j], cards) and card.CardGroup.to_cardgroup(subspace[j]). \
                     bigger_than(card.CardGroup.to_cardgroup(last_cards)):
                 # diff = card.Card.to_value(subspace[j][0]) - card.Card.to_value(last_cards[0])
                 # assert(diff > 0)
@@ -502,7 +508,7 @@ def get_mask_alter(cards, last_cards, last_cards_category):
             if no_bomb:
                 decision_mask[1] = 0
         return decision_mask, response_mask, bomb_mask, length_mask
-    
+
 
 # return [3-17 value]
 def give_cards_without_minor(response, last_cards_value, category_idx, length_output):
@@ -646,13 +652,13 @@ def inference_minor_util(s, handcards, sess, network, num, is_pair, dup_mask, ma
         inter_masks.append([input_single, input_pair, input_triple, input_quadric])
 
         response_minor_output = scheduled_run(sess, network.fc_minor_response_output,
-                                               (
-                                                   (network.input_state, s),
-                                                   (network.input_single, np.reshape(input_single, [1, -1])),
-                                                   (network.input_pair, np.reshape(input_pair, [1, -1])),
-                                                   (network.input_triple, np.reshape(input_triple, [1, -1])),
-                                                   (network.input_quadric, np.reshape(input_quadric, [1, -1]))
-                                               ))
+                                              (
+                                                  (network.input_state, s),
+                                                  (network.input_single, np.reshape(input_single, [1, -1])),
+                                                  (network.input_pair, np.reshape(input_pair, [1, -1])),
+                                                  (network.input_triple, np.reshape(input_triple, [1, -1])),
+                                                  (network.input_quadric, np.reshape(input_quadric, [1, -1]))
+                                              ))
         # response_active_output = sess.run(network.fc_response_active_output,
         #                                   feed_dict={
         #                                       network.input_state: s,
@@ -723,10 +729,10 @@ def inference_minor_util60(s, handcards, sess, network, num, is_pair, dup_mask, 
         inter_states.append(s.copy())
         input_single, input_pair, _, _ = get_masks(handcards, None)
         response_minor_output = scheduled_run(sess, network.fc_minor_response_output,
-                                               (
-                                                   (network.input_state, s),
-                                                   (network.minor_type, np.array([minor_type]))
-                                               ))
+                                              (
+                                                  (network.input_state, s),
+                                                  (network.minor_type, np.array([minor_type]))
+                                              ))
 
         # give minor cards
         response_minor_output = response_minor_output[0]
@@ -795,7 +801,7 @@ def gputimeblock(label):
         yield
     finally:
         end = time.perf_counter()
-        GPUTime.total_time += end-start
+        GPUTime.total_time += end - start
 
 
 def update_params(scope_from, scope_to):
@@ -808,7 +814,7 @@ def update_params(scope_from, scope_to):
             ops.append(to_var.assign(from_var))
     return ops
 
-    
+
 if __name__ == '__main__':
     mask = get_mask(['A', 'A', 'A'], action_space)
     print(mask[0])
@@ -821,4 +827,3 @@ if __name__ == '__main__':
     #             assert get_category_idx(np.array(action_space_category[i][j])) == i
     #         except AssertionError as error:
     #             print(i, action_space_category[i][j])
-

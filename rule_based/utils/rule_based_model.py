@@ -1,9 +1,9 @@
 import numpy as np
 
+from rule_based.utils.card import action_space
+from rule_based.utils.decomposer import Decomposer
+from rule_based.utils.evaluator import cards_value
 
-from rule_utils.card import action_space
-from rule_utils.decomposer import Decomposer
-from rule_utils.evaluator import cards_value
 card_list = [
     "3", "4", "5", "6",
     "7", "8", "9", "10",

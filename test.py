@@ -1,8 +1,10 @@
 import time
-from core import Env, CQL
+import dqn
+import net
+from envi import Env
 
 
-def fight_with(policy, model, total=200, debug=True):
+def fight_with(policy, net_cls, dqn_cls, model, total, debug=True):
     assert policy in {'random', 'dhcp'}
     env = Env(debug=debug)
     print('Fight with {}'.format(policy))
@@ -10,8 +12,8 @@ def fight_with(policy, model, total=200, debug=True):
         step = env.step_random
     else:
         step = env.step_auto
-    lord = CQL()
-    lord.policy_net.load('{}.bin'.format(model))
+    lord = dqn_cls(net_cls)
+    lord.policy_net.load(model)
     win_rate_list = []
     total_lord_win, total_farmer_win = 0, 0
     recent_lord_win, recent_farmer_win = 0, 0
@@ -36,18 +38,35 @@ def fight_with(policy, model, total=200, debug=True):
                     total_farmer_win += 1
                     recent_farmer_win += 1
 
-        if episode % 10 == 0:
+        if episode % 100 == 0:
             end_time = time.time()
-            print('Last 10 rounds takes {:.2f}seconds\n'
-                  '\tLord recent 10 win rate: {:.2%}\n'
+            print('Last 100 rounds takes {:.2f}seconds\n'
+                  '\tLord recent 100 win rate: {:.2%}\n'
                   '\tLord total {} win rate: {:.2%}\n\n'
                   .format(end_time - start_time,
-                          recent_lord_win / 10,
+                          recent_lord_win / 100,
                           episode, total_lord_win / episode))
             win_rate_list.append(recent_lord_win)
             recent_lord_win, recent_farmer_win = 0, 0
             start_time = time.time()
 
 
+def test_first():
+    for policy in ['random', 'dhcp']:
+        for model in ['0804_0112_2700_51', '0804_0112_3800_53',
+                      '0804_0112_4500_57']:
+            fight_with(policy, net.NetFirst, dqn.DQNFirst, model,
+                       total=1000, debug=False)
+
+
+def test_second():
+    for policy in ['dhcp', 'random']:
+        for model in ['0804_0245_2800_48', '0804_0245_3500_53',
+                      '0804_0245_4600_57']:
+            fight_with(policy, net.NetComplicated, dqn.DQNFirst, model,
+                       total=1000, debug=False)
+
+
 if __name__ == '__main__':
-    fight_with('random', '0803_0349/8000', total=1000, debug=False)
+    # TODO 根据model自行确定要调用的net 和dqn
+    test_second()

@@ -1,5 +1,5 @@
 # https://www.jianshu.com/p/9fb001daedcf
-from rule_utils.card import action_space_category
+from rule_based.utils.card import action_space_category
 
 char2val = {
     "3": 3, "4": 4, "5": 5, "6": 6,

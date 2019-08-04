@@ -1,8 +1,12 @@
 # https://github.com/qq456cvb/doudizhu-C
-from rule_utils.card import Card, action_space, CardGroup, augment_action_space_onehot60, augment_action_space, clamp_action_idx
-from rule_utils.utils import get_mask_onehot60
-import numpy as np
 import sys
+from rule_based.utils.card import Card, action_space, CardGroup, augment_action_space_onehot60, \
+    augment_action_space, clamp_action_idx
+from rule_based.utils.utils import get_mask_onehot60
+import numpy as np
+from config import ENV_DIR
+
+sys.path.insert(0, ENV_DIR)
 from env import get_combinations_nosplit, get_combinations_recursive
 
 
@@ -27,7 +31,8 @@ class Decomposer:
             # augment mask
             # TODO: known issue: 555444666 will not decompose into 5554 and 66644
             combs = get_combinations_nosplit(mask, card_mask)
-            combs = [([] if len(last_cards_char) == 0 else [0]) + [clamp_action_idx(idx_mapping[idx]) for idx in comb] for
+            combs = [([] if len(last_cards_char) == 0 else [0]) + [clamp_action_idx(idx_mapping[idx]) for idx in comb]
+                     for
                      comb in combs]
 
             if len(last_cards_char) > 0:
@@ -43,7 +48,8 @@ class Decomposer:
             else:
                 fine_mask = None
         else:
-            mask = get_mask_onehot60(curr_cards_char, action_space, None).reshape(len(action_space), 15, 4).sum(-1).astype(
+            mask = get_mask_onehot60(curr_cards_char, action_space, None).reshape(len(action_space), 15, 4).sum(
+                -1).astype(
                 np.uint8)
             valid = mask.sum(-1) > 0
             cards_target = Card.char2onehot60(curr_cards_char).reshape(-1, 4).sum(-1).astype(np.uint8)
@@ -56,8 +62,9 @@ class Decomposer:
             if len(last_cards_char) > 0:
                 valid[0] = True
                 idx_must_be_contained = set(
-                    [idx for idx in range(len(action_space)) if valid[idx] and CardGroup.to_cardgroup(action_space[idx]). \
-                        bigger_than(CardGroup.to_cardgroup(last_cards_char))])
+                    [idx for idx in range(len(action_space)) if
+                     valid[idx] and CardGroup.to_cardgroup(action_space[idx]). \
+                         bigger_than(CardGroup.to_cardgroup(last_cards_char))])
                 combs = [comb for comb in combs if not idx_must_be_contained.isdisjoint(comb)]
                 fine_mask = np.zeros([len(combs), self.num_actions[1]], dtype=np.bool)
                 for i in range(len(combs)):

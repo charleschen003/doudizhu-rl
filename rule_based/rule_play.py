@@ -1,14 +1,13 @@
-import sys
-sys.path.insert(0, 'precompiled')
-from core import Env as CEnv
-from rule_utils.rule_based_model import RuleBasedModel
+from envi import Env
+from rule_based.utils.rule_based_model import RuleBasedModel
 
 
 def rule_play():
-    env = CEnv()
+    env = Env()
     rule = RuleBasedModel()
     total_lord_win, total_farmer_win = 0, 0
     for episode in range(1, 3000 + 1):
+        print(episode)
         env.reset()
         env.prepare()
         r = 0

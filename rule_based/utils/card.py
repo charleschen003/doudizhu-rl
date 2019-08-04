@@ -5,6 +5,7 @@ import itertools
 import functools
 import math
 
+
 # Category = Enum('Category', 'EMPTY SINGLE DOUBLE TRIPLE QUADRIC THREE_ONE THREE_TWO SINGLE_LINE DOUBLE_LINE \
 #     TRIPLE_LINE THREE_ONE_LINE THREE_TWO_LINE BIGBANG FOUR_TWO', start=0)
 
@@ -37,27 +38,27 @@ def get_action_space():
     # max_cards = 20
     # single
     temp = len(actions)
-    for card in Card.cards: # 15
+    for card in Card.cards:  # 15
         actions.append([card])
     Category2Range.append([temp, len(actions)])
     temp = len(actions)
     # print(len(actions))
     # pair
-    for card in Card.cards: # 13
+    for card in Card.cards:  # 13
         if card != '*' and card != '$':
             actions.append([card] * 2)
     # print(len(actions))
     Category2Range.append([temp, len(actions)])
     temp = len(actions)
     # triple
-    for card in Card.cards: # 13
+    for card in Card.cards:  # 13
         if card != '*' and card != '$':
             actions.append([card] * 3)
     # print(len(actions))
     Category2Range.append([temp, len(actions)])
     temp = len(actions)
     # bomb
-    for card in Card.cards: # 13
+    for card in Card.cards:  # 13
         if card != '*' and card != '$':
             actions.append([card] * 4)
     Category2Range.append([temp, len(actions)])
@@ -182,7 +183,7 @@ class Card:
             else:
                 subvec = np.zeros(4)
                 subvec[:counts[x]] = 1
-                onehot[Card.cards_to_onehot_idx[x]:Card.cards_to_onehot_idx[x]+4] = subvec
+                onehot[Card.cards_to_onehot_idx[x]:Card.cards_to_onehot_idx[x] + 4] = subvec
         return onehot
 
     @staticmethod
@@ -208,7 +209,7 @@ class Card:
             idx = (x - 3) * 4
             subvec = np.zeros(4)
             subvec[:counts[x]] = 1
-            onehot[idx:idx+4] = subvec
+            onehot[idx:idx + 4] = subvec
         return onehot
 
     # convert char to 0-56 color cards
@@ -222,7 +223,7 @@ class Card:
                 ind += 1
             mask[ind] = 1
             result[i] = ind
-            
+
         return result
 
     @staticmethod
@@ -290,10 +291,10 @@ class Card:
             return cards
         else:
             return Card.value_to_cards[values]
-    
+
     @staticmethod
     def to_cards_from_3_17(values):
-        return Card.np_cards[values-3].tolist()
+        return Card.np_cards[values - 3].tolist()
 
 
 class CardGroup:
@@ -433,15 +434,15 @@ class CardGroup:
                     if cnt >= 3:
                         candidates.append(CardGroup(cand, Category.DOUBLE_LINE, Card.to_value(cand[0]), cnt))
                         # for c in cand:
-                            # if c in cards:
-                            #     cards.remove(c)
+                        # if c in cards:
+                        #     cards.remove(c)
                     cand = [doubles[i]] * 2
                     cnt = 1
             if cnt >= 3:
                 candidates.append(CardGroup(cand, Category.DOUBLE_LINE, Card.to_value(cand[0]), cnt))
                 # for c in cand:
-                    # if c in cards:
-                    #     cards.remove(c)
+                # if c in cards:
+                #     cards.remove(c)
 
         if len(triples) > 0:
             cnt = 1
@@ -514,21 +515,24 @@ class CardGroup:
                     CardGroup(cand + list(extra) * 2, Category.THREE_TWO_LINE,
                               Card.to_value(cand[0]), cnt))
 
-        importance = [Category.EMPTY, Category.SINGLE, Category.DOUBLE, Category.DOUBLE_LINE, Category.SINGLE_LINE, Category.THREE_ONE,
+        importance = [Category.EMPTY, Category.SINGLE, Category.DOUBLE, Category.DOUBLE_LINE, Category.SINGLE_LINE,
+                      Category.THREE_ONE,
                       Category.THREE_TWO, Category.THREE_ONE_LINE, Category.THREE_TWO_LINE,
                       Category.TRIPLE_LINE, Category.TRIPLE, Category.FOUR_TAKE_ONE, Category.FOUR_TAKE_TWO,
                       Category.QUADRIC, Category.BIGBANG]
         candidates.sort(key=functools.cmp_to_key(lambda x, y: importance.index(x.type) - importance.index(y.type)
-                        if importance.index(x.type) != importance.index(y.type) else x.value - y.value))
+        if importance.index(x.type) != importance.index(y.type) else x.value - y.value))
         # for c in candidates:
         #     print c.cards
         return candidates
+
 
 action_space = get_action_space()
 action_space_onehot60 = np.array([Card.char2onehot60(a) for a in action_space])
 action_space_category = [action_space[r[0]:r[1]] for r in Category2Range]
 
-augment_action_space = action_space + action_space_category[Category.SINGLE][:13] * 3 + action_space_category[Category.DOUBLE]
+augment_action_space = action_space + action_space_category[Category.SINGLE][:13] * 3 + action_space_category[
+    Category.DOUBLE]
 
 extra_actions = []
 for j in range(3):
@@ -568,7 +572,7 @@ if __name__ == '__main__':
     #     assert len(a) <= 20
     #     if len(a) > 0:
     #         CardGroup.to_cardgroup(a)
-        # print(a)
+    # print(a)
     # print(action_space_category[Category.SINGLE_LINE.value])
     # print(action_space_category[Category.DOUBLE_LINE.value])
     # print(action_space_category[Category.THREE_ONE.value])
