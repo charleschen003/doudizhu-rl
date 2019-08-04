@@ -53,7 +53,7 @@ def record(up, lord, down):
         json.dump(data, f)
 
 
-def train_from_scratch(net_cls, dqn_cls, total=12500, debug=False):
+def train_from_scratch(net_cls, dqn_cls, total=30000, debug=False):
     conf.DECAY = int((10000 * (2 / 3)) / 5)
     global LORD_TOTAL_LOSS, DOWN_TOTAL_LOSS, UP_TOTAL_LOSS
     global LORD_LOSS_COUNT, DOWN_LOSS_COUNT, UP_LOSS_COUNT
