@@ -165,7 +165,7 @@ def train_from_scratch(net_cls, dqn_cls, total=3000, debug=False):
             up_recent = lord_recent = down_recent = 0
             reset_loss()
             start_time = time.time()
-        if episode % 10000 == 0:
+        if episode % 1000 == 0:
             lord.policy_net.save('{}_lord_{}'.format(BEGIN, episode), 3)
             down.policy_net.save('{}_down_{}'.format(BEGIN, episode), 3)
             up.policy_net.save('{}_up_{}'.format(BEGIN, episode), 3)
@@ -313,9 +313,14 @@ def train_from_model(models, net_cls, dqn_cls, total=3000, debug=False):
         up.update_target(episode)
 
 
+def train_peasant():
+    pass
+
+
 if __name__ == '__main__':
     from net import NetFirst, NetComplicated
     from dqn import DQNFirst
+
     train_from_model({'lord': '0804_1423_2400_49'},
                      NetComplicated, DQNFirst,
                      total=3000, debug=True)
