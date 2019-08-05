@@ -4,7 +4,7 @@ import net
 from envi import Env
 
 
-def fight_with(policy, net_cls, dqn_cls, model, total, debug=True):
+def fight_with(policy, net_cls, dqn_cls, model, total, debug=True, max_split=2):
     assert policy in {'random', 'dhcp'}
     env = Env(debug=debug)
     print('Fight with {}'.format(policy))
@@ -13,7 +13,7 @@ def fight_with(policy, net_cls, dqn_cls, model, total, debug=True):
     else:
         step = env.step_auto
     lord = dqn_cls(net_cls)
-    lord.policy_net.load(model)
+    lord.policy_net.load(model, max_split=max_split)
     win_rate_list = []
     total_lord_win, total_farmer_win = 0, 0
     recent_lord_win, recent_farmer_win = 0, 0
@@ -74,7 +74,13 @@ def e3():
                        total=1000, debug=False)
 
 
-if __name__ == '__main__':
-    # TODO 根据model自行确定要调用的 net 和 dqn
-    fight_with('dhcp', net.NetComplicated, dqn.DQNFirst,
-               '0804_1045_4600_57', total=1000, debug=True)
+def e4():
+    for policy in ['dhcp', 'random']:
+        for i in [4, 5, 6, 8]:
+            model = 'feature_0804_2022_lord_scratch{}'.format(i * 1000)
+            fight_with(policy, net.NetComplicated, dqn.DQNFirst, model,
+                       total=1000, max_split=3, debug=False)
+
+
+if __name__ == '__main__':  # TODO 根据model自行确定要调用的 net 和 dqn
+    e4()

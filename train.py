@@ -8,8 +8,8 @@ from envi import Env
 BEGIN, logger = conf.get_logger()
 
 
-def train(net_cls, dqn_cls, total=3000, debug=False):
-    env = Env(debug=debug)
+def train(env_cls, net_cls, dqn_cls, total=3000, debug=False):
+    env = env_cls(debug=debug)
     lord = dqn_cls(net_cls)
     max_win = -1
     win_rate_list = []
@@ -84,6 +84,7 @@ def train(net_cls, dqn_cls, total=3000, debug=False):
 
 
 if __name__ == '__main__':
-    from net import NetFirst, NetComplicated
+    from envi import Env, EnvComplicated
+    from net import NetFirst, NetComplicated, NetMoreComplicated
     from dqn import DQNFirst
-    train(NetFirst, DQNFirst, total=3000, debug=False)
+    train(EnvComplicated, NetMoreComplicated, DQNFirst, total=3000, debug=False)

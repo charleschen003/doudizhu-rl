@@ -2,6 +2,7 @@ import sys
 import config as conf
 import torch
 import random
+import collections
 import numpy as np
 from config import DEVICE
 from collections import Counter
@@ -19,6 +20,7 @@ class Env(CEnv):
             super(Env, self).__init__()
         self.taken = np.zeros((15,))
         self.left = np.array([17, 20, 17], dtype=np.int)
+        self.history = collections.defaultdict(lambda: np.zeros((15,)))
         self.old_cards = None
         self.debug = debug
         self.manual_peasant = manual_peasant
@@ -32,6 +34,7 @@ class Env(CEnv):
         self.left[role] -= len(cards)
         for card, count in Counter(cards - 3).items():
             self.taken[card] += count
+            self.history[role][card] += count
         if self.debug:
             char = '$'
             if role == 1:
@@ -148,3 +151,18 @@ class Env(CEnv):
     def cards2str(self, cards):
         res = [conf.DICT[i] for i in cards]
         return res
+
+
+class EnvComplicated(Env):
+    @property
+    def face(self):
+        """
+        :return: 7 * 15 * 4 的数组，作为当前状态
+        """
+        handcards = self.cards2arr(self.get_curr_handcards())
+        known = [handcards, self.taken,
+                 self.history[0], self.history[1], self.history[2]]
+        known = self.batch_arr2onehot(known)
+        prob = self.get_state_prob().reshape(2, 15, 4)
+        face = np.concatenate((known, prob))
+        return torch.tensor(face, dtype=torch.float).to(DEVICE)
