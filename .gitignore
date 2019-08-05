@@ -168,3 +168,4 @@ outs/images/*
 !outs/images/.gitkeep
 __pycache__/*
 backup/*
+!outs/plot.py
