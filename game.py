@@ -4,13 +4,20 @@ import json
 import config as conf
 import torch
 
-BEGIN, logger = conf.get_logger()
+BEGIN, logger, LOG_PATH = conf.get_logger()
 
 
 class Game:
-    def __init__(self, env_cls, nets_dict, dqns_dict, reward=None,
-                 preload=None, seed=None, debug=False):
+    def __init__(self, env_cls, nets_dict, dqns_dict, reward_dict=None,
+                 train_dict=None, preload=None, seed=None, debug=False):
+        if reward_dict is None:
+            reward_dict = {'lord': 100, 'down': 50, 'up': 50}
+        if train_dict is None:
+            train_dict = {'lord': True, 'down': True, 'up': True}
+        if preload is None:
+            preload = {}
         assert not (nets_dict.keys() ^ dqns_dict.keys()), 'Net and DQN must match'
+
         self.lord_wins, self.down_wins, self.up_wins = [], [], []
         self.lord_total_loss = self.down_total_loss = self.up_total_loss = 0
         self.lord_loss_count = self.down_loss_count = self.up_loss_count = 0
@@ -19,16 +26,20 @@ class Game:
 
         self.env = env_cls(debug=debug, seed=seed)
         self.lord = self.down = self.up = None
+        self.lord_train = self.down_train = self.up_train = False
         for role in ['lord', 'down', 'up']:
-            if nets_dict.get(role) is not None:
+            if nets_dict.get(role):
                 setattr(self, role, dqns_dict[role](nets_dict[role]))
+                setattr(self, '{}_train'.format(role), train_dict[role])
+                if preload.get(role):
+                    getattr(self, role).target_net.load(preload.get(role))
+                    getattr(self, role).policy_net.load(preload.get(role))
 
         self.lord_s0 = self.down_s0 = self.up_s0 = None
         self.lord_a0 = self.down_a0 = self.up_a0 = None
-
-        if reward is None:
-            reward = {'lord': 100, 'down': 50, 'up': 50}
-        self.r = reward
+        self.reward_dict = reward_dict
+        self.preload = preload
+        self.train_dict = train_dict
 
     def accumulate_loss(self, name, loss):
         assert name in {'up', 'down', 'lord'}
@@ -63,130 +74,81 @@ class Game:
         self.lord_total_loss = self.down_total_loss = self.up_total_loss = 0
         self.lord_loss_count = self.down_loss_count = self.up_loss_count = 0
 
-    def lord_turn(self):
-        if self.lord:  # 地主使用模型
-            self.lord_s0 = self.env.face
-            self.lord_a0 = self.lord.e_greedy_action(
-                self.lord_s0, self.env.valid_actions())
-            _, done, _ = self.env.step_manual(self.lord_a0)
+    def step(self, ai):
+        assert ai in {'lord', 'down', 'up'}
+        agent = getattr(self, ai)
+        continue_train = getattr(self, '{}_train'.format(ai))
+        if agent:  # 不是使用规则
+            s0 = self.env.face
+            if continue_train:  # 需要继续训练
+                setattr(self, '{}_s0'.format(ai), s0)  # 更新状态s0
+                action_f = agent.e_greedy_action
+            else:
+                action_f = agent.greedy_action
+            a0 = action_f(s0, self.env.valid_actions())
+            if continue_train:
+                setattr(self, '{}_a0'.format(ai), a0)  # 更新动作a0
+            _, done, _ = self.env.step_manual(a0)
         else:
             _, done, _ = self.env.step_auto()
-        if not done:  # 本局未结束，下家得到0反馈
-            if self.down and self.down_s0:
-                face = self.env.face
-                down_a1 = self.down.greedy_action(face, self.env.valid_actions())
-                down_loss = self.down.perceive(
-                    self.down_s0, self.down_a0, 0, face, down_a1, done)
-                self.accumulate_loss('down', down_loss)
+        return done
+
+    def feedback(self, ai, done, punish=False):
+        assert ai in {'lord', 'up', 'down'}
+        agent = getattr(self, ai)
+        if agent and getattr(self, '{}_train'.format(ai)):  # 是需要继续训练的模型
+            if done:
+                reward = self.reward_dict[ai]
+                if punish:
+                    reward = -reward
+            else:
+                reward = 0
+            s0 = getattr(self, '{}_s0'.format(ai))
+            a0 = getattr(self, '{}_a0'.format(ai))
+            s1 = self.env.face
+            if done:
+                a1 = torch.zeros((15, 4), dtype=torch.float).to(conf.DEVICE)
+            else:
+                a1 = agent.greedy_action(s1, self.env.valid_actions())
+            loss = agent.perceive(s0, a0, reward, s1, a1, done)
+            self.accumulate_loss(ai, loss)
+
+    def lord_turn(self):
+        done = self.step('lord')
+        if not done:  # 本局未结束
+            if self.down_a0 is not None:  # 如果下家曾经出过牌
+                self.feedback('down', done)
         else:  # 本局结束，地主胜利
-            if self.down_s0:  # 非春天走完
-                # 下家得到负反馈
-                if self.down:
-                    down_a1 = torch.zeros((15, 4), dtype=torch.float).to(conf.DEVICE)
-                    down_loss = self.down.perceive(
-                        self.down_s0, self.down_a0, -self.r['down'],
-                        self.env.face, down_a1, done)
-                    self.accumulate_loss('down', down_loss)
-                if self.up:
-                    # 上家得到负反馈
-                    up_a1 = torch.zeros((15, 4), dtype=torch.float).to(conf.DEVICE)
-                    up_loss = self.up.perceive(
-                        self.up_s0, self.up_a0, -self.r['up'],
-                        self.env.face, up_a1, done)
-                    self.accumulate_loss('up', up_loss)
-            if self.lord:
-                # 自己得到正反馈
-                lord_a1 = torch.zeros((15, 4), dtype=torch.float).to(conf.DEVICE)
-                lord_loss = self.lord.perceive(
-                    self.lord_s0, self.lord_a0, self.r['lord'],
-                    self.env.face, lord_a1, done)
-                self.accumulate_loss('lord', lord_loss)
+            if self.down_a0 is not None:  # 如果下家曾经出过牌（不是一次性走完）
+                self.feedback('down', done, punish=True)  # 下家负反馈
+                self.feedback('up', done, punish=True)  # 上家负反馈
+            # 自己得到正反馈
+            self.feedback('lord', done)
             self.lord_total_wins += 1
             self.lord_recent_wins += 1
         return done
 
     def down_turn(self):
-        # 随后下家开始
-        if self.down:
-            self.down_s0 = self.env.face
-            self.down_a0 = self.down.e_greedy_action(
-                self.down_s0, self.env.valid_actions())
-            _, done, _ = self.env.step_manual(self.down_a0)
-        else:
-            _, done, _ = self.env.step_auto()
-        if not done:  # 本局未结束，上家得到0反馈
-            if self.up and self.up_s0:
-                face = self.env.face
-                up_a1 = self.up.greedy_action(face, self.env.valid_actions())
-                up_loss = self.up.perceive(
-                    self.up_s0, self.up_a0, 0, face, up_a1, done)
-                self.accumulate_loss('up', up_loss)
+        done = self.step('down')
+        if not done:  # 本局未结束
+            if self.up_a0 is not None:
+                self.feedback('up', done)
         else:  # 本局结束，农民胜利
-            # 上家得到正反馈
-            if self.up:
-                up_a1 = torch.zeros((15, 4), dtype=torch.float).to(conf.DEVICE)
-                up_loss = self.up.perceive(
-                    self.up_s0, self.up_a0, self.r['up'],
-                    self.env.face, up_a1, done)
-                self.accumulate_loss('up', up_loss)
-
-            # 地主得到负反馈
-            if self.lord:
-                lord_a1 = torch.zeros((15, 4), dtype=torch.float).to(conf.DEVICE)
-                lord_loss = self.lord.perceive(
-                    self.lord_s0, self.lord_a0, -self.r['lord'],
-                    self.env.face, lord_a1, done)
-                self.accumulate_loss('lord', lord_loss)
-
-            # 自己得到正反馈
-            if self.down:
-                down_a1 = torch.zeros((15, 4), dtype=torch.float).to(conf.DEVICE)
-                down_loss = self.down.perceive(
-                    self.down_s0, self.down_a0, self.r['down'],
-                    self.env.face, down_a1, done)
-                self.accumulate_loss('down', down_loss)
+            self.feedback('up', done)
+            self.feedback('lord', done, punish=True)
+            self.feedback('down', done)
             self.down_recent_wins += 1
             self.down_total_wins += 1
         return done
 
     def up_turn(self):
-        # 最后上家出牌
-        if self.up:
-            self.up_s0 = self.env.face
-            self.up_a0 = self.up.e_greedy_action(
-                self.up_s0, self.env.valid_actions())
-            _, done, _ = self.env.step_manual(self.up_a0)  # 上家
-        else:
-            _, done, _ = self.env.step_auto()
+        done = self.step('up')
         if not done:  # 本局未结束，地主得到0反馈
-            if self.lord:
-                face = self.env.face
-                lord_a1 = self.lord.greedy_action(face, self.env.valid_actions())
-                lord_loss = self.lord.perceive(
-                    self.lord_s0, self.lord_a0, 0, face, lord_a1, done)
-                self.accumulate_loss('lord', lord_loss)
+            self.feedback('lord', done)
         else:  # 本局结束，农民胜利
-            # 地主得到负反馈
-            if self.lord:
-                lord_a1 = torch.zeros((15, 4), dtype=torch.float).to(conf.DEVICE)
-                lord_loss = self.lord.perceive(
-                    self.lord_s0, self.lord_a0, -self.r['lord'],
-                    self.env.face, lord_a1, done)
-                self.accumulate_loss('lord', lord_loss)
-            # 下家得到正反馈
-            if self.down:
-                down_a1 = torch.zeros((15, 4), dtype=torch.float).to(conf.DEVICE)
-                down_loss = self.down.perceive(
-                    self.down_s0, self.down_a0, self.r['down'],
-                    self.env.face, down_a1, done)
-                self.accumulate_loss('down', down_loss)
-            # 自己得到正反馈
-            if self.up:
-                up_a1 = torch.zeros((15, 4), dtype=torch.float).to(conf.DEVICE)
-                up_loss = self.up.perceive(
-                    self.up_s0, self.up_a0, self.r['up'],
-                    self.env.face, up_a1, done)
-                self.accumulate_loss('up', up_loss)
+            self.feedback('lord', done, punish=True)  # 地主得到负反馈
+            self.feedback('down', done)  # 下家得到正反馈
+            self.feedback('up', done)  # 自己得到正反馈
             self.up_total_wins += 1
             self.up_recent_wins += 1
         return done
@@ -206,6 +168,27 @@ class Game:
                 break
 
     def train(self, episodes, log_every=100, model_every=1000):
+        if not ((self.lord and self.lord_train)
+                or (self.up and self.up_train)
+                or (self.down and self.down_train)):
+            print('No agent need train.')
+            return
+        print('Logged at {}'.format(LOG_PATH))
+        messages = ''
+        for role in ['up', 'lord', 'down']:
+            m = '{}: {} based model.'.format(
+                role, 'AI' if getattr(self, role) else 'Rule')
+            if getattr(self, role):
+                preload = self.preload.get(role)
+                if preload:
+                    m += ' With pretrained model {}.'.format(preload)
+                else:
+                    m += ' Without pretrained model.'
+                if self.train_dict.get(role):
+                    m += ' Continue training.'
+            messages += '\n{}'.format(m)
+        logger.info(messages + '\n------------------------------------')
+        print(messages)
         start_time = time.time()
         for episode in range(1, episodes + 1):
             self.play()

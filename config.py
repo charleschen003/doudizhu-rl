@@ -45,4 +45,4 @@ def get_logger():
     logger.setLevel(logging.INFO)
     log_format = '[%(asctime)s][%(name)s][%(levelname)s]:  %(message)s'
     logging.basicConfig(filename=path, filemode='w', format=log_format)
-    return begin, logger
+    return begin, logger, path

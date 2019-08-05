@@ -5,19 +5,26 @@ if __name__ == '__main__':
     from net import NetMoreComplicated
     from dqn import DQNFirst
     net_dict = {
-        'lord': NetMoreComplicated,
-        'down': None,
-        'up': None,
+        'lord': None,
+        'down': NetMoreComplicated,
+        'up': NetMoreComplicated,
     }
     dqn_dict = {
-        'lord': DQNFirst,
-        'down': None,
-        'up': None,
+        'lord': None,
+        'down': DQNFirst,
+        'up': DQNFirst,
     }
-    reward = {
-        'lord': 100,
-        'down': 50,
-        'up': 50,
+    reward_dict = {
+        'lord': None,
+        'down': 100,
+        'up': 100,
     }
-    game = Game(EnvComplicated, net_dict, dqn_dict, reward, debug=False)
-    game.train(10, 1, 10)
+    train_dict = {
+        'lord': False,
+        'up': True,
+        'down': True,
+    }
+    game = Game(EnvComplicated, net_dict, dqn_dict,
+                reward_dict=reward_dict, train_dict=train_dict,
+                debug=False)
+    game.train(20, 5, 10)
