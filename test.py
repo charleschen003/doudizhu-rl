@@ -1,12 +1,12 @@
 import time
 import dqn
 import net
-from envi import Env
+from envi import Env, EnvComplicated
 
 
-def fight_with(policy, net_cls, dqn_cls, model, total, debug=True, max_split=2):
+def fight_with(policy, net_cls, dqn_cls, model, total, env_cls=Env, debug=True, max_split=2):
     assert policy in {'random', 'dhcp'}
-    env = Env(debug=debug)
+    env = env_cls(debug=debug)
     print('Fight with {}'.format(policy))
     if policy == 'random':
         step = env.step_random
@@ -19,6 +19,8 @@ def fight_with(policy, net_cls, dqn_cls, model, total, debug=True, max_split=2):
     recent_lord_win, recent_farmer_win = 0, 0
     start_time = time.time()
     for episode in range(1, total + 1):
+        if debug:
+            print('\n-------------------------------------------')
         env.reset()
         env.prepare()
         done = False
@@ -82,5 +84,12 @@ def e4():
                        total=1000, max_split=3, debug=False)
 
 
+def e5():
+    for policy in ['dhcp', 'random']:
+        for model in ['0805_1019_2900_54', '0805_1019_4100_58']:
+            fight_with(policy, net.NetMoreComplicated, dqn.DQNFirst, model,
+                       total=1000, debug=False, env_cls=EnvComplicated)
+
+
 if __name__ == '__main__':  # TODO 根据model自行确定要调用的 net 和 dqn
-    e4()
+    e5()

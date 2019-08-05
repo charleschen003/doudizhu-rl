@@ -13,7 +13,7 @@ from env import Env as CEnv
 
 
 class Env(CEnv):
-    def __init__(self, debug=False, seed=None, manual_peasant=False):
+    def __init__(self, debug=False, seed=None):
         if seed:
             super(Env, self).__init__(seed=seed)
         else:
@@ -21,9 +21,8 @@ class Env(CEnv):
         self.taken = np.zeros((15,))
         self.left = np.array([17, 20, 17], dtype=np.int)
         self.history = collections.defaultdict(lambda: np.zeros((15,)))
-        self.old_cards = None
+        self.old_cards = dict()
         self.debug = debug
-        self.manual_peasant = manual_peasant
 
     def reset(self):
         super(Env, self).reset()
@@ -37,26 +36,26 @@ class Env(CEnv):
             self.history[role][card] += count
         if self.debug:
             char = '$'
+            handcards = self.cards2str(self.old_cards[role])
             if role == 1:
                 char = '#'
                 name = '地主'
-                print('\n# 地主手牌: {}'.format(self.cards2str(self.old_cards)))
+                print('\n# 地主手牌: {}'.format(handcards), end='')
                 input()
             elif role == 0:
                 name = '上家'
-                if self.manual_peasant:
-                    print('\n$ 上家手牌: {}'.format(self.cards2str(self.old_cards)))
-                    input()
+                print('\n$ 上家手牌: {}'.format(handcards), end='')
+                input()
             else:
                 name = '下家'
-                if self.manual_peasant:
-                    print('\n$ 下家手牌: {}'.format(self.cards2str(self.old_cards)))
-                    input()
+                print('\n$ 下家手牌: {}'.format(handcards), end='')
+                input()
             print('{} {}出牌： {}，分别剩余： {}'.format(
                 char, name, self.cards2str(cards), self.left))
 
     def step_manual(self, onehot_cards):
         role = self.get_role_ID() - 1
+        self.old_cards[role] = self.get_curr_handcards()
         arr_cards = self.onehot2arr(onehot_cards)
         cards = self.arr2cards(arr_cards)
 
@@ -65,14 +64,17 @@ class Env(CEnv):
 
     def step_auto(self):
         role = self.get_role_ID() - 1
+        self.old_cards[role] = self.get_curr_handcards()
         cards, r, _ = super(Env, self).step_auto()
         self._update(role, cards)
         return cards, r, _
 
     def step_random(self):
+        role = self.get_role_ID() - 1
+        self.old_cards[role] = self.get_curr_handcards()
         actions = self.valid_actions(tensor=False)
         cards = self.arr2cards(random.choice(actions))
-        self._update(self.get_role_ID() - 1, cards)
+        self._update(role, cards)
         return super(Env, self).step_manual(cards)
 
     @property
@@ -90,8 +92,7 @@ class Env(CEnv):
         """
         :return:  batch_size * 15 * 4 的可行动作集合
         """
-        self.old_cards = self.get_curr_handcards()
-        handcards = self.cards2arr(self.old_cards)
+        handcards = self.cards2arr(self.get_curr_handcards())
         last_two = self.get_last_two_cards()
         if last_two[0]:
             last = last_two[0]
