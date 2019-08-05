@@ -20,10 +20,10 @@ DHCP是rule based model，用来训练网络的模型，且训练的都是地主
 |0804_1423|6000|93.5|54.3|
 |0804_1423|8000|93.4|45.8|
 |feature_0804_2022|lord_scratch4000|94.5|54.3|
-|feature_0804_2022|lord_scratch5000||47|
+|feature_0804_2022|lord_scratch5000|94.8|47|
 |feature_0804_2022|lord_scratch6000|94.6|46.8|
-|feature_0804_2022|lord_scratch7000||45.5|
-|feature_0804_2022|lord_scratch8000||41.7|
+|feature_0804_2022|lord_scratch7000|95.1|45.5|
+|feature_0804_2022|lord_scratch8000|92.5|41.7|
 |feature_0804_2022|lord_scratch9000|92.8|45.9|
 |feature_0804_2022|lord_scratch12000|92.2|44.8|
 
