@@ -223,3 +223,55 @@ class Game:
                 if ai:
                     ai.update_epsilon(episode)
                     ai.update_target(episode)
+
+    @staticmethod
+    def compete(env_cls, nets_dict, dqns_dict, model_dict, total=1000,
+                print_every=100, debug=True):
+        import collections
+        assert not (nets_dict.keys() ^ dqns_dict.keys()), 'Net and DQN must match'
+        assert not (nets_dict.keys() ^ model_dict.keys()), 'Net and Model must match'
+        wins = collections.Counter()
+        total_wins = collections.Counter()
+        ai = {'up': None, 'lord': None, 'down': None}
+        for role in ['up', 'lord', 'down']:
+            if nets_dict.get(role) is not None:
+                print('AI based {}.'.format(role))
+                ai[role] = dqns_dict[role](nets_dict[role])
+                ai[role].policy_net.load(model_dict[role])
+            else:
+                print('Rule based {}.'.format(role))
+
+        env = env_cls(debug=debug)
+        start_time = time.time()
+        for episode in range(1, total + 1):
+            if debug:
+                print('\n-------------------------------------------')
+            env.reset()
+            env.prepare()
+            done = False
+            while not done:
+                for role in ['lord', 'down', 'up']:
+                    if ai[role]:
+                        action = ai[role].greedy_action(env.face, env.valid_actions())
+                        _, done, _ = env.step_manual(action)
+                    else:
+                        _, done, _ = env.step_auto()
+                    if done:  # 地主结束本局，地主赢
+                        wins[role] += 1
+                        total_wins[role] += 1
+                        break
+
+            if episode % print_every == 0:
+                end_time = time.time()
+                message = ('Reach at {}, Last {} rounds takes {:.2f}seconds\n'
+                           '\tUp  recent/total win rate: {:.2%}/{:.2%}\n'
+                           '\tLord recent/total win rate: {:.2%}/{:.2%}\n'
+                           '\tDown recent/total win rate: {:.2%}/{:.2%}\n')
+                args = (episode, print_every, end_time - start_time,
+                        wins['up'] / print_every, total_wins['up'] / episode,
+                        wins['lord'] / print_every, total_wins['lord'] / episode,
+                        wins['down'] / print_every, total_wins['down'] / episode)
+                print(message.format(*args))
+                wins = collections.Counter()
+                start_time = time.time()
+        return total_wins
