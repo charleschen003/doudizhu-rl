@@ -1,0 +1,22 @@
+Level Count for Landlord:
+Counter({'huangjin_5': 86827, 'zuanshi_5': 78508, 'huangjin_4': 67529, 'huangjin_3': 50552, 'zuanshi_4': 42770, 'huangjin_2': 40143, 'huangjin_1': 31695, 'bojin_5': 25383, 'bojin_4': 21045, 'zuanshi_3': 19730, 'bojin_3': 19223, 'bojin_2': 17196, 'bojin_1': 16585, 'zuanshi_2': 9488, 'zuanshi_1': 5307, 'xingyao_5': 4793, 'xingyao_4': 374, 'xingyao_3': 223, 'xingyao_2': 80, 'xingyao_1': 6})
+
+
+Level Count for Landlord_down:
+Counter({'huangjin_5': 36890, 'zuanshi_5': 30046, 'huangjin_4': 27827, 'huangjin_3': 20641, 'zuanshi_4': 16375, 'huangjin_2': 16164, 'huangjin_1': 13002, 'bojin_5': 10364, 'bojin_4': 8340, 'zuanshi_3': 7651, 'bojin_3': 7599, 'bojin_2': 6997, 'bojin_1': 6702, 'zuanshi_2': 3693, 'xingyao_5': 2137, 'zuanshi_1': 2061, 'xingyao_4': 287, 'xingyao_3': 156, 'xingyao_2': 83, 'xingyao_1': 5})
+
+
+Level Count for Landlord_up:
+Counter({'huangjin_5': 41167, 'zuanshi_5': 33893, 'huangjin_4': 31687, 'huangjin_3': 24033, 'huangjin_2': 18769, 'zuanshi_4': 18429, 'huangjin_1': 14620, 'bojin_5': 11706, 'bojin_4': 9540, 'bojin_3': 8553, 'zuanshi_3': 8416, 'bojin_2': 7642, 'bojin_1': 7350, 'zuanshi_2': 4384, 'xingyao_5': 2397, 'zuanshi_1': 2344, 'xingyao_4': 307, 'xingyao_3': 198, 'xingyao_2': 83, 'xingyao_1': 5})
+
+
+Percent of Level, Landlord:
+{'xingyao_5': 0.5138844215717808, 'xingyao_4': 0.38636363636363635, 'xingyao_3': 0.38648180242634317, 'xingyao_2': 0.3252032520325203, 'xingyao_1': 0.375, 'zuanshi_5': 0.5511383181112975, 'zuanshi_4': 0.5513445226493413, 'zuanshi_3': 0.551163505321675, 'zuanshi_2': 0.5401651010532309, 'zuanshi_1': 0.5464373970345964, 'bojin_5': 0.534908224980507, 'bojin_4': 0.540655105973025, 'bojin_3': 0.5434063604240282, 'bojin_2': 0.5401602010365949, 'bojin_1': 0.5413389039396808, 'huangjin_5': 0.5265944542830111, 'huangjin_4': 0.5315444377100667, 'huangjin_3': 0.5308634196542961, 'huangjin_2': 0.5346981725185146, 'huangjin_1': 0.5343324847851375}
+
+
+Percent of Level, landlord_down
+{'xingyao_5': 0.22911975983703228, 'xingyao_4': 0.2964876033057851, 'xingyao_3': 0.2703639514731369, 'xingyao_2': 0.33739837398373984, 'xingyao_1': 0.3125, 'zuanshi_5': 0.21092757306226176, 'zuanshi_4': 0.21108876685487404, 'zuanshi_3': 0.21373299438500434, 'zuanshi_2': 0.2102476515798463, 'zuanshi_1': 0.21221169686985172, 'bojin_5': 0.2184055802583609, 'bojin_4': 0.21425818882466283, 'bojin_3': 0.21481272084805653, 'bojin_2': 0.2197895398146694, 'bojin_1': 0.21875510004243234, 'huangjin_5': 0.22373304868877514, 'huangjin_4': 0.2190360744000063, 'huangjin_3': 0.21675802826959023, 'huangjin_2': 0.21530182748148544, 'huangjin_1': 0.21919517170457037}
+
+
+Percent of Level, landlord_up
+{'xingyao_5': 0.25699581859118686, 'xingyao_4': 0.31714876033057854, 'xingyao_3': 0.3431542461005199, 'xingyao_2': 0.33739837398373984, 'xingyao_1': 0.3125, 'zuanshi_5': 0.2379341088264407, 'zuanshi_4': 0.23756671049578468, 'zuanshi_3': 0.23510350029332067, 'zuanshi_2': 0.24958724736692287, 'zuanshi_1': 0.2413509060955519, 'bojin_5': 0.24668619476113207, 'bojin_4': 0.24508670520231213, 'bojin_3': 0.24178091872791518, 'bojin_2': 0.24005025914873568, 'bojin_1': 0.23990599601788687, 'huangjin_5': 0.24967249702821379, 'huangjin_4': 0.24941948788992704, 'huangjin_3': 0.25237855207611365, 'huangjin_2': 0.25, 'huangjin_1': 0.24647234351029215}

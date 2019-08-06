@@ -12,8 +12,14 @@ app.logger.setLevel('INFO')
 
 mock_env = Env(seed=0)
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-ai = DQNFirst(NetMoreComplicated)
-ai.policy_net.load('0805_1409_lord_4000')
+lord = DQNFirst(NetMoreComplicated)
+up = DQNFirst(NetMoreComplicated)
+down = DQNFirst(NetMoreComplicated)
+lord.policy_net.load('0805_1409_lord_4000')
+up.policy_net.load('0806_1906_up_3000')
+down.policy_net.load('0806_1906_down_3000')
+AI = {0: up, 1: lord, 2: down}
+ai = None
 
 
 def get_prob(role_id, cur_cards, history, left):
@@ -67,8 +73,11 @@ def choose(state, actions):
 
 
 def response(payload):
-    if payload['role_id'] != 1:
-        return {'msg': '现在只支持地主', 'statue': False, 'data': []}
+    global ai
+    if not payload['cur_card']:
+        return {'msg': '无手牌', 'status': False, 'data': []}
+    ai = AI[payload['role_id']]
+
     start_time = time.time()
     payload['history'][1] = payload['history'].pop('1')
     payload['history'][2] = payload['history'].pop('2')

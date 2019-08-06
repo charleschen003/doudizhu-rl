@@ -1,7 +1,7 @@
 import json
 import requests
 
-url = 'http://127.0.0.1:5000/'
+url = 'http://117.78.4.26:5000/'
 
 payload1 = {
     'role_id': 1,  # 0代表地主上家，1代表地主，2代表地主下家
