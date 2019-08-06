@@ -161,9 +161,11 @@ class EnvComplicated(Env):
         :return: 7 * 15 * 4 的数组，作为当前状态
         """
         handcards = self.cards2arr(self.get_curr_handcards())
-        known = [handcards, self.taken,
-                 self.history[0], self.history[1], self.history[2]]
-        known = self.batch_arr2onehot(known)
+        role = self.get_role_ID() - 1
+        h0 = self.history[(role - 1 + 3) % 3]
+        h1 = self.history[(role + 0 + 3) % 3]
+        h2 = self.history[(role + 1 + 3) % 3]
+        known = self.batch_arr2onehot([handcards, self.taken, h0, h1, h2])
         prob = self.get_state_prob().reshape(2, 15, 4)
         face = np.concatenate((known, prob))
         return torch.tensor(face, dtype=torch.float).to(DEVICE)
