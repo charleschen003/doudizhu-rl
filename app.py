@@ -81,10 +81,12 @@ def response(payload):
     ai = AI[payload['role_id']]
     name = NAME[payload['role_id']]
     print('\n----------------------------------------\n'
-          '\t【{}】历史出牌：{}\n'
-          '\t【{}】上家出牌：{}； 当前手牌：{}'
+          '\t【{}】桌上的牌：{}\n'
+          '\t【{}】上家出牌：{}\n'
+          '\t【{}】当前手牌：{}'
           .format(name, payload['history'],
-                  name, payload['last_taken'], payload['cur_cards']))
+                  name, payload['last_taken'],
+                  name, payload['cur_cards']))
 
     start_time = time.time()
     payload['history'][1] = payload['history'].pop('1')
