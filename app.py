@@ -15,7 +15,8 @@ DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 lord = DQNFirst(NetMoreComplicated)
 up = DQNFirst(NetMoreComplicated)
 down = DQNFirst(NetMoreComplicated)
-lord.policy_net.load('0806_1905_lord_3000')  # 原：0805_1409_lord_4000
+# lord.policy_net.load('0806_1905_lord_3000')  # 原：0805_1409_lord_4000
+lord.policy_net.load('0805_1409_lord_4000')
 up.policy_net.load('0806_1905_up_3000')
 down.policy_net.load('0806_1905_down_3000')
 AI = {0: up, 1: lord, 2: down}
@@ -78,9 +79,12 @@ def response(payload):
     if not payload['cur_cards']:
         return {'msg': '无手牌', 'status': False, 'data': []}
     ai = AI[payload['role_id']]
-
-    print('\n\n【{}】上家出牌：{}； 当前手牌：{}'.format(
-        NAME[payload['role_id']], payload['last_taken'], payload['cur_cards']))
+    name = NAME[payload['role_id']]
+    print('\n----------------------------------------\n'
+          '\t【{}】历史出牌：{}\n'
+          '\t【{}】上家出牌：{}； 当前手牌：{}'
+          .format(name, payload['history'],
+                  name, payload['last_taken'], payload['cur_cards']))
 
     start_time = time.time()
     payload['history'][1] = payload['history'].pop('1')
@@ -93,7 +97,7 @@ def response(payload):
     state = face(**payload)
     actions = valid_actions(payload['cur_cards'], last_taken)
     data = choose(state, actions)
-    print('\t出牌：{}'.format(data))
+    print('\t【{}】本次出牌：{}'.format(name, data))
     end_time = time.time()
     app.logger.info('Response takes {:.2f}ms'
                     .format(1000 * (end_time - start_time)))
