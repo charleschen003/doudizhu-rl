@@ -5,7 +5,7 @@ from datetime import datetime
 from pytz import timezone
 
 # Hyper Parameters for DQN
-GAMMA = 0.96  # discount factor for target q
+GAMMA = 0.95  # discount factor for target q
 EPSILON_HIGH = 0.5  # starting value of epsilon
 EPSILON_LOW = 0.01  # final value of epsilon
 REPLAY_SIZE = 20000  # experience replay buffer size
