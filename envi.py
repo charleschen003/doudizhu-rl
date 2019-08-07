@@ -21,6 +21,7 @@ class Env(CEnv):
         self.taken = np.zeros((15,))
         self.left = np.array([17, 20, 17], dtype=np.int)
         self.history = collections.defaultdict(lambda: np.zeros((15,)))
+        self.recent_handout = collections.defaultdict(lambda: np.zeros((15,)))
         self.old_cards = dict()
         self.debug = debug
 
@@ -28,12 +29,16 @@ class Env(CEnv):
         super(Env, self).reset()
         self.taken = np.zeros((15,))
         self.left = np.array([17, 20, 17])
+        self.history = collections.defaultdict(lambda: np.zeros((15,)))
+        self.recent_handout = collections.defaultdict(lambda: np.zeros((15,)))
+        self.old_cards = dict()
 
     def _update(self, role, cards):
         self.left[role] -= len(cards)
         for card, count in Counter(cards - 3).items():
             self.taken[card] += count
             self.history[role][card] += count
+        self.recent_handout[role] = self.cards2arr(cards)
         if self.debug:
             char = '$'
             handcards = self.cards2str(self.old_cards[role])
@@ -166,6 +171,26 @@ class EnvComplicated(Env):
         h1 = self.history[(role + 0 + 3) % 3]
         h2 = self.history[(role + 1 + 3) % 3]
         known = self.batch_arr2onehot([handcards, self.taken, h0, h1, h2])
+        prob = self.get_state_prob().reshape(2, 15, 4)
+        face = np.concatenate((known, prob))
+        return torch.tensor(face, dtype=torch.float).to(DEVICE)
+
+
+class EnvCooperation(Env):
+    @property
+    def face(self):
+        """
+        :return: 9 * 15 * 4 的数组，作为当前状态
+        """
+        handcards = self.cards2arr(self.get_curr_handcards())
+        role = self.get_role_ID() - 1
+        h0 = self.history[(role - 1 + 3) % 3]
+        h1 = self.history[(role + 0 + 3) % 3]
+        h2 = self.history[(role + 1 + 3) % 3]
+        b1 = self.recent_handout[(role - 1 + 3) % 3]
+        b2 = self.recent_handout[(role - 2 + 3) % 3]
+        known = self.batch_arr2onehot([handcards, self.taken,
+                                       h0, h1, h2, b1, b2])
         prob = self.get_state_prob().reshape(2, 15, 4)
         face = np.concatenate((known, prob))
         return torch.tensor(face, dtype=torch.float).to(DEVICE)
