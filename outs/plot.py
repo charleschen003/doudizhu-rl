@@ -17,19 +17,21 @@ def plot(fn):
     path = '{}.json'.format(path)
     with open(path) as f:
         data = json.load(f)
-
+    title = '未知'
     if isinstance(data, list):
+        title = '地主胜率走势'
         y = np.array(data) / 100
         plt.plot(y, alpha=0.3)
         sm = gaussian_filter1d(y, sigma=3)
         plt.plot(sm)
     elif isinstance(data, dict):
+        title = '胜率走势'
         for i, (k, v) in enumerate(data.items()):
             y = np.array(v) / 100
             plt.plot(y, alpha=0.3,color='C{}'.format(i))
             sm = gaussian_filter1d(y, sigma=5)
             plt.plot(sm, label=k, color='C{}'.format(i))
-    plt.title('地主胜率走势')
+    plt.title(title)
     plt.xlabel('训练总百次数')
     plt.ylabel('过去100次AI地主胜率')
     plt.legend()
