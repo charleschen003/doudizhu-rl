@@ -40,6 +40,7 @@ class Game:
         self.reward_dict = reward_dict
         self.preload = preload
         self.train_dict = train_dict
+        self.lord_max_wins = 0
 
     def accumulate_loss(self, name, loss):
         assert name in {'up', 'down', 'lord'}
@@ -54,10 +55,16 @@ class Game:
                 self.up_loss_count += 1
                 self.up_total_loss += loss
 
-    def save_win_rates(self):
+    def save_win_rates(self, episode):
         self.lord_wins.append(self.lord_recent_wins)
         self.up_wins.append(self.up_recent_wins)
         self.down_wins.append(self.down_recent_wins)
+        # 是否高于最高胜率
+        if self.lord and self.up is None and self.down is None:
+            if self.lord_recent_wins > self.lord_max_wins:
+                self.lord_max_wins = self.lord_recent_wins
+                self.lord.policy_net.save(
+                    '{}_{}_{}'.format(BEGIN, episode, self.lord_max_wins))
         # 存一次胜率目录
         data = {'lord': self.lord_wins, 'down': self.down_wins, 'up': self.up_wins}
         path = os.path.join(conf.WIN_DIR, conf.name_dir(BEGIN))
@@ -67,7 +74,6 @@ class Game:
         path = '{}.json'.format(path)
         with open(path, 'w') as f:
             json.dump(data, f)
-        # 清理最近胜率
 
     def reset_recent(self):
         self.lord_recent_wins = self.up_recent_wins = self.down_recent_wins = 0
@@ -208,7 +214,7 @@ class Game:
                          self.down_recent_wins / log_every, self.down_total_wins / episode,
                          self.down_total_loss / (self.down_loss_count + 1e-3))
                 logger.info(message)
-                self.save_win_rates()
+                self.save_win_rates(episode)
                 self.reset_recent()
                 start_time = time.time()
             if episode % model_every == 0:
