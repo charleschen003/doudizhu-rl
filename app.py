@@ -4,21 +4,20 @@ import torch
 import numpy as np
 from envi import r, Env
 from dqn import DQNFirst
-from net import NetMoreComplicated
+from net import NetCooperation
 from flask import Flask, request
 
 app = Flask(__name__)
-app.logger.setLevel('INFO')
+# app.logger.setLevel('INFO')
 
 mock_env = Env(seed=0)
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-lord = DQNFirst(NetMoreComplicated)
-up = DQNFirst(NetMoreComplicated)
-down = DQNFirst(NetMoreComplicated)
-# lord.policy_net.load('0806_1905_lord_3000')  # 原：0805_1409_lord_4000
-lord.policy_net.load('0805_1409_lord_4000')
-up.policy_net.load('0806_1905_up_3000')
-down.policy_net.load('0806_1905_down_3000')
+lord = DQNFirst(NetCooperation)
+up = DQNFirst(NetCooperation)
+down = DQNFirst(NetCooperation)
+lord.policy_net.load('0807_1340_lord_4000')  # 原：0805_1409_lord_4000
+up.policy_net.load('0807_1344_up_6000')
+down.policy_net.load('0807_1344_down_6000')
 AI = {0: up, 1: lord, 2: down}
 NAME = {0: '地主上', 1: '地主', 2: '地主下'}
 ai = None
@@ -34,22 +33,24 @@ def get_prob(role_id, cur_cards, history, left):
     return prob
 
 
-def parse_history(role_id, history):
+def parse_history(role_id, history, last_taken):
     h0 = history[(role_id - 1 + 3) % 3]
     h1 = history[(role_id + 0 + 3) % 3]
     h2 = history[(role_id + 1 + 3) % 3]
+    b1 = last_taken[(role_id - 1 + 3) % 3]
+    b2 = last_taken[(role_id - 2 + 3) % 3]
     taken = h0 + h1 + h2
-    return list(map(mock_env.cards2arr, [taken, h0, h1, h2]))
+    return list(map(mock_env.cards2arr, [taken, h0, h1, h2, b1, b2]))
 
 
-def face(role_id, cur_cards, history, left):
+def face(role_id, cur_cards, history, left, last_taken):
     """
     :return:  4 * 15 * 4 的数组，作为当前状态
     """
     # 已知数据
     handcards = mock_env.cards2arr(cur_cards)
-    taken, h0, h1, h2 = parse_history(role_id, history)
-    known = mock_env.batch_arr2onehot([handcards, taken, h0, h1, h2])
+    taken, h0, h1, h2, b1, b2 = parse_history(role_id, history, last_taken)
+    known = mock_env.batch_arr2onehot([handcards, taken, h0, h1, h2, b1, b2])
     prob = get_prob(role_id, cur_cards, history, left).reshape(2, 15, 4)
     state = np.concatenate((known, prob))
     return torch.tensor(state, dtype=torch.float).to(DEVICE)
@@ -75,35 +76,40 @@ def choose(state, actions):
 
 
 def response(payload):
+    start_time = time.time()
     global ai
     if not payload['cur_cards']:
         return {'msg': '无手牌', 'status': False, 'data': []}
-    ai = AI[payload['role_id']]
-    name = NAME[payload['role_id']]
-    print('\n----------------------------------------\n'
-          '\t【{}】桌上的牌：{}\n'
-          '\t【{}】上家出牌：{}\n'
-          '\t【{}】当前手牌：{}'
-          .format(name, payload['history'],
-                  name, payload['last_taken'],
-                  name, payload['cur_cards']))
+    debug = payload.pop('debug', False)
+    for key in ['history', 'last_taken', 'left']:
+        payload[key][0] = payload[key].pop('0')
+        payload[key][1] = payload[key].pop('1')
+        payload[key][2] = payload[key].pop('2')
 
-    start_time = time.time()
-    payload['history'][1] = payload['history'].pop('1')
-    payload['history'][2] = payload['history'].pop('2')
-    payload['history'][0] = payload['history'].pop('0')
-    payload['left'][1] = payload['left'].pop('1')
-    payload['left'][2] = payload['left'].pop('2')
-    payload['left'][0] = payload['left'].pop('0')
-    last_taken = payload.pop('last_taken')
+    role_id = payload['role_id']
+    ai = AI[role_id]
+    name = NAME[role_id]
     state = face(**payload)
-    actions = valid_actions(payload['cur_cards'], last_taken)
+    last = payload['last_taken'][(role_id - 1 + 3) % 3]
+    actions = valid_actions(payload['cur_cards'], last)
+
     data = choose(state, actions)
-    print('\t【{}】本次出牌：{}'.format(name, data))
     end_time = time.time()
-    app.logger.info('Response takes {:.2f}ms'
-                    .format(1000 * (end_time - start_time)))
-    return {'msg': 'success', 'statue': True, 'data': data}
+    msg = (('\n\t【{}】响应耗时{:.2f}ms\n'
+            '\t【{}】桌上的牌：{}\n'
+            '\t【{}】上家出牌：{}\n'
+            '\t【{}】当前手牌：{}\n'
+            '\t【{}】本次出牌：{}')
+           .format(name, 1000 * (end_time - start_time),
+                   name, payload['history'],
+                   name, last,
+                   name, payload['cur_cards'],
+                   name, data))
+    app.logger.debug(msg)
+    res = {'msg': 'success', 'statue': True, 'data': data}
+    if debug:
+        res['msg'] = msg
+    return res
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -116,4 +122,4 @@ def home():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(host='0.0.0.0', debug=True)

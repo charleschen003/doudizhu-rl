@@ -20,6 +20,7 @@ class Env(CEnv):
             super(Env, self).__init__()
         self.taken = np.zeros((15,))
         self.left = np.array([17, 20, 17], dtype=np.int)
+        # 0表示上家，1表示地主，2表示下家
         self.history = collections.defaultdict(lambda: np.zeros((15,)))
         self.recent_handout = collections.defaultdict(lambda: np.zeros((15,)))
         self.old_cards = dict()
@@ -92,6 +93,10 @@ class Env(CEnv):
         prob = self.get_state_prob().reshape(2, 15, 4)
         face = np.concatenate((known, prob))
         return torch.tensor(face, dtype=torch.float).to(DEVICE)
+
+    @property
+    def role(self):
+        return self.get_curr_ID()
 
     def valid_actions(self, tensor=True):
         """
