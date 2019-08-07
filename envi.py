@@ -94,10 +94,6 @@ class Env(CEnv):
         face = np.concatenate((known, prob))
         return torch.tensor(face, dtype=torch.float).to(DEVICE)
 
-    @property
-    def role(self):
-        return self.get_curr_ID()
-
     def valid_actions(self, tensor=True):
         """
         :return:  batch_size * 15 * 4 的可行动作集合
