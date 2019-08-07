@@ -39,5 +39,27 @@ def e2():
     print(wins)
 
 
+def e_0806_1906_lord():
+    from envi import Env, EnvComplicated
+    from net import NetComplicated, NetMoreComplicated
+    from dqn import DQNFirst
+
+    net_dict = {
+        'lord': NetMoreComplicated,
+    }
+    dqn_dict = {
+        'lord': DQNFirst,
+    }
+    wins = {}
+    for model in [3, 4]:
+        model_dict = {
+            'lord': '0806_1906_lord_{}000'.format(model),
+        }
+        win = Game.compete(EnvComplicated, net_dict, dqn_dict, model_dict,
+                           total=1000, print_every=100, debug=False)
+        wins[model] = win
+    return wins
+
+
 if __name__ == '__main__':
-    e2()
+    res = e_0806_1906_lord()
