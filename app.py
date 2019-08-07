@@ -91,6 +91,8 @@ def response(payload):
     name = NAME[role_id]
     state = face(**payload)
     last = payload['last_taken'][(role_id - 1 + 3) % 3]
+    if not last:
+        last = payload['last_taken'][(role_id - 2 + 3) % 3]
     actions = valid_actions(payload['cur_cards'], last)
 
     data = choose(state, actions)
