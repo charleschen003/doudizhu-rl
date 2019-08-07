@@ -64,7 +64,7 @@ class Game:
             if self.lord_recent_wins > self.lord_max_wins:
                 self.lord_max_wins = self.lord_recent_wins
                 self.lord.policy_net.save(
-                    '{}_{}_{}'.format(BEGIN, episode, self.lord_max_wins))
+                    '{}_lord_{}_{}'.format(BEGIN, episode, self.lord_max_wins))
         # 存一次胜率目录
         data = {'lord': self.lord_wins, 'down': self.down_wins, 'up': self.up_wins}
         path = os.path.join(conf.WIN_DIR, conf.name_dir(BEGIN))

@@ -1,11 +1,10 @@
 from game import Game
+from envi import Env, EnvComplicated, EnvCooperation
+from net import NetComplicated, NetMoreComplicated, NetCooperation
+from dqn import DQNFirst
 
 
 def e1():
-    from envi import EnvComplicated
-    from net import NetMoreComplicated
-    from dqn import DQNFirst
-
     net_dict = {
         'lord': NetMoreComplicated,
     }
@@ -21,10 +20,6 @@ def e1():
 
 
 def e2():
-    from envi import Env
-    from net import NetComplicated
-    from dqn import DQNFirst
-
     net_dict = {
         'lord': NetComplicated,
     }
@@ -40,10 +35,6 @@ def e2():
 
 
 def e_0806_1906_lord():
-    from envi import Env, EnvComplicated
-    from net import NetComplicated, NetMoreComplicated
-    from dqn import DQNFirst
-
     net_dict = {
         'lord': NetMoreComplicated,
     }
@@ -61,5 +52,26 @@ def e_0806_1906_lord():
     return wins
 
 
-if __name__ == '__main__':
-    res = e_0806_1906_lord()
+def e_0807_1340():
+    net_dict = {
+        'lord': None,
+        'down': NetCooperation,
+        'up': NetCooperation,
+    }
+    dqn_dict = {
+        'lord': None,
+        'down': DQNFirst,
+        'up': DQNFirst,
+    }
+    model_dict = {
+        'lord': None,
+        'down': '0807_1344_down_3000',
+        'up': '0807_1344_up_3000',
+    }
+    win = Game.compete(EnvCooperation, net_dict, dqn_dict, model_dict,
+                       total=1000, print_every=100, debug=False)
+    return win
+
+
+# if __name__ == '__main__':
+res = e_0807_1340()
