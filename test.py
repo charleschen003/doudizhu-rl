@@ -1,6 +1,6 @@
 from game import Game
-from envi import Env, EnvComplicated, EnvCooperation
-from net import NetComplicated, NetMoreComplicated, NetCooperation
+from envi import Env, EnvComplicated, EnvCooperation, EnvCooperationSimplify
+from net import NetComplicated, NetMoreComplicated, NetCooperation, NetCooperationSimplify
 from dqn import DQNFirst
 
 
@@ -73,5 +73,26 @@ def e_0807_1340():
     return win
 
 
+def e0808():
+    net_dict = {
+        'lord': None,
+        'down': NetCooperationSimplify,
+        'up': NetCooperationSimplify,
+    }
+    dqn_dict = {
+        'lord': None,
+        'down': DQNFirst,
+        'up': DQNFirst,
+    }
+    model_dict = {
+        'lord': None,
+        'down': '0808_0854_down_6000',
+        'up': '0808_0854_up_6000',
+    }
+    win = Game.compete(EnvCooperationSimplify, net_dict, dqn_dict, model_dict,
+                       total=1000, print_every=100, debug=False)
+    return win
+
+
 # if __name__ == '__main__':
-res = e_0807_1340()
+res = e0808()
