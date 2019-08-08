@@ -23,6 +23,7 @@ class Game:
         self.lord_loss_count = self.down_loss_count = self.up_loss_count = 0
         self.up_total_wins = self.lord_total_wins = self.down_total_wins = 0
         self.up_recent_wins = self.lord_recent_wins = self.down_recent_wins = 0
+        self.lord_max_wins = self.farmer_max_wins = 0
 
         self.env = env_cls(debug=debug, seed=seed)
         self.lord = self.down = self.up = None
@@ -40,7 +41,6 @@ class Game:
         self.reward_dict = reward_dict
         self.preload = preload
         self.train_dict = train_dict
-        self.lord_max_wins = 0
 
     def accumulate_loss(self, name, loss):
         assert name in {'up', 'down', 'lord'}
@@ -65,6 +65,13 @@ class Game:
                 self.lord_max_wins = self.lord_recent_wins
                 self.lord.policy_net.save(
                     '{}_lord_{}_{}'.format(BEGIN, episode, self.lord_max_wins))
+        if self.lord and not self.lord_train:
+            if self.up_recent_wins + self.down_recent_wins > self.farmer_max_wins:
+                self.farmer_max_wins = self.up_recent_wins + self.down_recent_wins
+                self.up.policy_net.save(
+                    '{}_up_{}_{}'.format(BEGIN, episode, self.farmer_max_wins))
+                self.down.policy_net.save(
+                    '{}_down_{}_{}'.format(BEGIN, episode, self.farmer_max_wins))
         # 存一次胜率目录
         data = {'lord': self.lord_wins, 'down': self.down_wins, 'up': self.up_wins}
         path = os.path.join(conf.WIN_DIR, conf.name_dir(BEGIN))

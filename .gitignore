@@ -169,3 +169,4 @@ outs/images/*
 __pycache__/*
 backup/*
 !outs/plot.py
+tmp.py
