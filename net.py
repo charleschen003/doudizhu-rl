@@ -132,3 +132,19 @@ class NetCooperation(NetComplicated):
         self.drop = nn.Dropout(0.5)
         self.fc1 = nn.Linear(256 * (15 + 4), 256)
         self.fc2 = nn.Linear(256, 1)
+
+
+class NetCooperationSimplify(NetComplicated):
+    def __init__(self):
+        # input shape: 7 * 15 * 4
+        super(Net, self).__init__()
+        self.conv1 = nn.Conv2d(7, 256, (1, 1), (1, 4))  # 256 * 15 * 1
+        self.conv2 = nn.Conv2d(7, 256, (1, 2), (1, 4))
+        self.conv3 = nn.Conv2d(7, 256, (1, 3), (1, 4))
+        self.conv4 = nn.Conv2d(7, 256, (1, 4), (1, 4))
+        self.convs = (self.conv1, self.conv2, self.conv3, self.conv4)  # 256 * 15 * 4
+        self.conv_shunzi = nn.Conv2d(7, 256, (15, 1), 1)  # 256 * 1 * 4
+        self.pool = nn.MaxPool2d((1, 4))  # 256 * 15 * 1
+        self.drop = nn.Dropout(0.5)
+        self.fc1 = nn.Linear(256 * (15 + 4), 256)
+        self.fc2 = nn.Linear(256, 1)
