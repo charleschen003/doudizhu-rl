@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 
 cur_dir, _ = os.path.split(os.path.abspath(__file__))
 par_dir = os.path.abspath(os.path.join(cur_dir, '..'))
@@ -10,6 +11,8 @@ from server.core import Predictor
 
 app = Flask(__name__)
 ai = Predictor()
+logging.basicConfig(filename=os.path.join(cur_dir, 'debug.log'),
+                    level=logging.DEBUG)
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -27,4 +30,4 @@ def home():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
