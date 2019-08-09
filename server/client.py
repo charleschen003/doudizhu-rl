@@ -1,8 +1,8 @@
 import json
 import requests
 
-url = 'http://127.0.0.1:5001/'
-server_url = 'http://117.78.4.26:5001'
+url = 'http://127.0.0.1:5000/'
+server_url = 'http://117.78.4.26:5000'
 payload1 = {
     'role_id': 1,  # 0代表地主上家，1代表地主，2代表地主下家
     'last_taken': {  # 更改处
@@ -44,8 +44,22 @@ payload2 = {
     'debug': True,  # 是否返回debug
 }
 
-res = requests.post(server_url, json=payload1)
-print(json.loads(res.content))
-
-res = requests.post(server_url, json=payload2)
+# res = requests.post(server_url, json=payload1)
+# print(json.loads(res.content))
+#
+# res = requests.post(server_url, json=payload2)
+# print(json.loads(res.content))
+record = {
+    'is_human': {
+        '0': 1,
+        '1': 0,
+        '2': 0,
+    },
+    'record': {
+        '0': 1,
+        '1': 0,
+        '2': 0,
+    }
+}
+res = requests.post(url+'record', json=record)
 print(json.loads(res.content))

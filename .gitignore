@@ -170,3 +170,4 @@ __pycache__/*
 backup/*
 !outs/plot.py
 tmp.py
+*.db

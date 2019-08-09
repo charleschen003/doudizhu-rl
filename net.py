@@ -148,3 +148,34 @@ class NetCooperationSimplify(NetComplicated):
         self.drop = nn.Dropout(0.5)
         self.fc1 = nn.Linear(256 * (15 + 4), 256)
         self.fc2 = nn.Linear(256, 1)
+
+
+class NetFinal(Net):
+    # input shape: 7 * 15 * 4
+    def __init__(self):
+        super(NetFinal, self).__init__()
+        # 深1卷积
+        for l in [1, 5, 6, 7, 8, 9, 10, 11, 12]:
+            setattr(self, 'conv1_{}'.format(l), nn.Conv2d(7, 64, (l, 1), (1, 4)))
+        # 深2卷积
+        for l in [1, 3, 4, 5, 6, 7, 8, 9, 10]:
+            setattr(self, 'conv2_{}'.format(l), nn.Conv2d(7, 64, (l, 2), (1, 4)))
+        # 深3卷积
+        for l in [1, 2, 3, 4, 5, 6]:
+            setattr(self, 'conv3_{}'.format(l), nn.Conv2d(7, 64, (l, 3), (1, 4)))
+        # 深4卷积
+        for l in [1, 2, 3, 4, 5]:
+            setattr(self, 'conv4_{}'.format(l), nn.Conv2d(7, 64, (l, 4), (1, 4)))
+
+    def forward(self, face, actions):
+        """
+        :param face: 当前状态  face_deep(根据env固定) * 15 * 4
+        :param actions: 所有动作 batch_size * 15 * 4
+        :return:
+        """
+        if face.dim() == 3:
+            face = face.unsqueeze(0).repeat((actions.shape[0], 1, 1, 1))
+        actions = actions.unsqueeze(1)
+        state_action = torch.cat((face, actions), dim=1)
+
+        return
