@@ -2,7 +2,7 @@ from dqn import DQNFirst
 from net import NetCooperationSimplify
 
 # db_url = 'sqlite:///tmp.db'
-db_url = 'mysql://lyq:lyqhhh@localhost/ddz'
+db_url = 'mysql+pymysql://lyq:lyqhhh@localhost/ddz'
 
 net_dict = {
     'lord': NetCooperationSimplify,
