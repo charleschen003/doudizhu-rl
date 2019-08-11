@@ -95,10 +95,6 @@ class Predictor:
 
         if not payload['cur_cards']:
             return {'msg': '无手牌', 'status': False, 'data': []}
-        for key in ['history', 'last_taken', 'left']:
-            payload[key][0] = payload[key].pop('0')
-            payload[key][1] = payload[key].pop('1')
-            payload[key][2] = payload[key].pop('2')
 
         state = self.face(**payload)
         last, actions = self.valid_actions(**payload)

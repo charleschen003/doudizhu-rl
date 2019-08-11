@@ -35,6 +35,10 @@ class Record(db.Model):
 
 
 def get_res(payload):
+    for key in ['history', 'last_taken', 'left']:
+        payload[key][0] = payload[key].pop('0')
+        payload[key][1] = payload[key].pop('1')
+        payload[key][2] = payload[key].pop('2')
     left = sum(payload['left'].values())
     if left <= 7:
         id2name = {0: '地主上', 1: '地主', 2: '地主下'}
