@@ -2,7 +2,7 @@ import json
 import requests
 
 url = 'http://127.0.0.1:5000/'
-server_url = 'http://117.78.4.26:5000'
+server_url = 'http://117.78.4.26:5000/'
 payload1 = {
     'role_id': 1,  # 0代表地主上家，1代表地主，2代表地主下家
     'last_taken': {  # 更改处
@@ -61,5 +61,5 @@ record = {
         '2': 0,
     }
 }
-res = requests.post(url+'record', json=record)
+res = requests.post('http://117.78.4.26:5000/', json=payload2)
 print(json.loads(res.content))

@@ -67,7 +67,7 @@ class Predictor:
         action = self.mock_env.onehot2arr(action)
         return [int(i) for i in self.mock_env.arr2cards(action)]
 
-    def act(self, payload):
+    def act(self, payload):  # TODO 判断使用哪个model
         """
         :param payload = {
                 'role_id': 1,  # 0代表地主上家，1代表地主，2代表地主下家
@@ -113,5 +113,5 @@ class Predictor:
                .format(self.id2name[payload['role_id']],
                        1000 * (end_time - start_time), payload['history'],
                        last, payload['cur_cards'], action))
-        res = {'msg': msg, 'statue': True, 'data': action}
+        res = {'msg': msg, 'status': True, 'data': action}
         return res
