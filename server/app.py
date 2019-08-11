@@ -1,7 +1,6 @@
 import os
 import sys
 import logging
-from flask import g
 from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 
