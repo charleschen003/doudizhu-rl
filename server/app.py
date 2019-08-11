@@ -35,7 +35,7 @@ class Record(db.Model):
 
 
 def get_res(payload):
-    left = sum(payload['left'])
+    left = sum(payload['left'].values())
     if left <= 7:
         id2name = {0: '地主上', 1: '地主', 2: '地主下'}
         start_time = time.time()
