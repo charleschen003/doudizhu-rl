@@ -12,7 +12,6 @@ sys.path.insert(0, par_dir)
 import server.config as conf
 from server.core import Predictor
 from server.CFR import final_card
-sys.setrecursionlimit(1000)
 ai = Predictor()
 logging.basicConfig(filename=os.path.join(cur_dir, 'debug.log'),
                     level=logging.DEBUG)
@@ -40,7 +39,7 @@ def get_res(payload):
         payload[key][1] = payload[key].pop('1')
         payload[key][2] = payload[key].pop('2')
     left = sum(payload['left'].values())
-    if left <= 7:
+    if left <= 0:
         id2name = {0: '地主上', 1: '地主', 2: '地主下'}
         start_time = time.time()
         action = final_card(payload)
