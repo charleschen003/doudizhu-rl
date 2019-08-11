@@ -10,6 +10,7 @@ sys.path.insert(0, par_dir)
 
 import server.config as conf
 from server.core import Predictor
+from server.CFR import final_card
 
 ai = Predictor()
 logging.basicConfig(filename=os.path.join(cur_dir, 'debug.log'),
@@ -32,16 +33,23 @@ class Record(db.Model):
     win_down = db.Column(db.Boolean, nullable=False)
 
 
-@app.route('/', methods=['GET', 'POST'])
-def home():
-    if request.method == 'POST':
-        payload = request.get_json()
+def get_res(payload):
+    if sum(payload['left'] <= 7):
+        res = {'msg': 'CFR', 'status': True, 'data': final_card(payload)}
+    else:
         debug = payload.pop('debug', False)
         res = ai.act(payload)
         app.logger.debug(res['msg'])
         if debug is False:
             res['msg'] = 'success'
-        return res
+    return res
+
+
+@app.route('/', methods=['GET', 'POST'])
+def home():
+    if request.method == 'POST':
+        payload = request.get_json()
+        return get_res(payload)
     else:
         return 'It works'
 
