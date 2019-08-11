@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import logging
 from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
@@ -34,8 +35,23 @@ class Record(db.Model):
 
 
 def get_res(payload):
-    if sum(payload['left'] <= 7):
-        res = {'msg': 'CFR', 'status': True, 'data': final_card(payload)}
+    left = sum(payload['left'])
+    if left <= 7:
+        id2name = {0: '地主上', 1: '地主', 2: '地主下'}
+        start_time = time.time()
+        action = final_card(payload)
+        end_time = time.time()
+        app.logger.debug('\n\tLeft num is {}, Using CFR'.format(left))
+        msg = (('\t【{0}】响应耗时{1:.2f}ms\n'
+                '\t【{0}】桌上的牌：{2}\n'
+                '\t【{0}】最近出牌：{3}\n'
+                '\t【{0}】当前手牌：{4}\n'
+                '\t【{0}】本次出牌：{5}')
+               .format(id2name[payload['role_id']],
+                       1000 * (end_time - start_time), payload['history'],
+                       payload['last_taken'], payload['cur_cards'], action))
+        app.logger.debug(msg)
+        res = {'msg': 'CFR', 'status': True, 'data': action}
     else:
         debug = payload.pop('debug', False)
         res = ai.act(payload)
