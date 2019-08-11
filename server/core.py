@@ -8,6 +8,13 @@ DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class Predictor:
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(Predictor, cls).__new__(cls, *args, **kwargs)
+        return cls._instance
+
     def __init__(self):
         self.mock_env = Env(seed=0)
         self.lord = self.up = self.down = None

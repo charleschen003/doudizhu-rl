@@ -12,7 +12,7 @@ sys.path.insert(0, par_dir)
 import server.config as conf
 from server.core import Predictor
 
-g.ai = Predictor()
+ai = Predictor()
 logging.basicConfig(filename=os.path.join(cur_dir, 'debug.log'),
                     level=logging.DEBUG)
 
@@ -38,7 +38,7 @@ def home():
     if request.method == 'POST':
         payload = request.get_json()
         debug = payload.pop('debug', False)
-        res = g.ai.act(payload)
+        res = ai.act(payload)
         app.logger.debug(res['msg'])
         if debug is False:
             res['msg'] = 'success'
