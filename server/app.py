@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+from flask import g
 from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 
@@ -11,13 +12,14 @@ sys.path.insert(0, par_dir)
 import server.config as conf
 from server.core import Predictor
 
-ai = Predictor()
+g.ai = Predictor()
 logging.basicConfig(filename=os.path.join(cur_dir, 'debug.log'),
                     level=logging.DEBUG)
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 app.config['SQLALCHEMY_DATABASE_URI'] = conf.db_url
+
 db = SQLAlchemy(app)
 
 
@@ -36,7 +38,7 @@ def home():
     if request.method == 'POST':
         payload = request.get_json()
         debug = payload.pop('debug', False)
-        res = ai.act(payload)
+        res = g.ai.act(payload)
         app.logger.debug(res['msg'])
         if debug is False:
             res['msg'] = 'success'
