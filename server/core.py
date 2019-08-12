@@ -37,7 +37,7 @@ class Predictor:
         taken = h0 + h1 + h2
         return list(map(self.mock_env.cards2arr, [taken, h0, h1, h2, b1, b2]))
 
-    def face(self, role_id, cur_cards, history, left, last_taken):
+    def face(self, role_id, cur_cards, history, left, last_taken, **kwargs):
         """
         :return:  6 * 15 * 4 的数组，作为当前状态
         """
