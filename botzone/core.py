@@ -1,10 +1,10 @@
 import time
 import torch
 import numpy as np
-import server.config as conf
+import config as conf
 from envi import r, Env
-from server.CFR import final_card
-from server.mcts.interface import mcts
+from CFR import final_card
+from mcts.interface import mcts
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -16,7 +16,7 @@ class Predictor:
         for role in ['lord', 'up', 'down']:
             if conf.net_dict[role]:
                 ai = conf.dqn_dict[role](conf.net_dict[role])
-                ai.policy_net.load(conf.model_dict[role])
+                ai.policy_net.load(abspath=conf.model_dict[role])
                 setattr(self, role, ai)
         self.id2ai = {0: self.up, 1: self.lord, 2: self.down}
         self.id2name = {0: '地主上', 1: '地主', 2: '地主下'}
@@ -74,7 +74,7 @@ class Predictor:
             return {'msg': '无手牌', 'status': False, 'data': []}
         start_time = time.time()
         left = sum(payload['left'].values())
-        if left <= 7:
+        if left <= 0:
             name = 'CFR'
             action = final_card(payload)
             last_taken = payload['last_taken']

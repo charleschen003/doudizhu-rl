@@ -11,7 +11,7 @@ sys.path.insert(0, par_dir)
 
 import server.config as conf
 from server.core import Predictor
-from server.CFR import final_card
+
 ai = Predictor()
 logging.basicConfig(filename=os.path.join(cur_dir, 'debug.log'),
                     level=logging.DEBUG)
@@ -38,29 +38,11 @@ def get_res(payload):
         payload[key][0] = payload[key].pop('0')
         payload[key][1] = payload[key].pop('1')
         payload[key][2] = payload[key].pop('2')
-    left = sum(payload['left'].values())
-    if left <= 0:
-        id2name = {0: '地主上', 1: '地主', 2: '地主下'}
-        start_time = time.time()
-        action = final_card(payload)
-        end_time = time.time()
-        app.logger.debug('\n\tLeft num is {}, Using CFR'.format(left))
-        msg = (('\t【{0}】响应耗时{1:.2f}ms\n'
-                '\t【{0}】桌上的牌：{2}\n'
-                '\t【{0}】最近出牌：{3}\n'
-                '\t【{0}】当前手牌：{4}\n'
-                '\t【{0}】本次出牌：{5}')
-               .format(id2name[payload['role_id']],
-                       1000 * (end_time - start_time), payload['history'],
-                       payload['last_taken'], payload['cur_cards'], action))
-        app.logger.debug(msg)
-        res = {'msg': 'CFR', 'status': True, 'data': action}
-    else:
-        debug = payload.pop('debug', False)
-        res = ai.act(payload)
-        app.logger.debug(res['msg'])
-        if debug is False:
-            res['msg'] = 'success'
+    debug = payload.pop('debug', False)
+    res = ai.act(payload)
+    app.logger.debug(res['msg'])
+    if debug is False:
+        res['msg'] = 'success'
     return res
 
 
