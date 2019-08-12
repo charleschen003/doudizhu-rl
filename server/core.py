@@ -67,7 +67,7 @@ class Predictor:
         action = self.mock_env.onehot2arr(action)
         return [int(i) for i in self.mock_env.arr2cards(action)]
 
-    def act(self, payload):  # TODO 判断使用哪个model
+    def act(self, payload, **kwargs):  # TODO 判断使用哪个model
         """
         :param payload = {
                 'role_id': 1,  # 0代表地主上家，1代表地主，2代表地主下家
