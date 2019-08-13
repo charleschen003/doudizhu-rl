@@ -74,7 +74,7 @@ class Predictor:
             return {'msg': '无手牌', 'status': False, 'data': []}
         start_time = time.time()
         left = sum(payload['left'].values())
-        if left <= 7:
+        if left <= 6:
             name = 'CFR'
             action = final_card(payload)
             last_taken = payload['last_taken']
