@@ -73,8 +73,8 @@ class Predictor:
         if not payload['cur_cards']:
             return {'msg': '无手牌', 'status': False, 'data': []}
         start_time = time.time()
-        left = sum(payload['left'].values())
-        min_left = min(payload['left'].values())
+        # left = sum(payload['left'].values())
+        # min_left = min(payload['left'].values())
         # if left <= 6:
         #     name = 'CFR'
         #     action = final_card(payload)
@@ -82,18 +82,18 @@ class Predictor:
         #     last = last_taken[(payload['role_id'] - 1 + 3) % 3]
         #     if not last:
         #         last = last_taken[(payload['role_id'] - 2 + 3) % 3]
-        if min_left <= 7:
-            name = 'MCTS'
-            action = mcts(payload)
-            last_taken = payload['last_taken']
-            last = last_taken[(payload['role_id'] - 1 + 3) % 3]
-            if not last:
-                last = last_taken[(payload['role_id'] - 2 + 3) % 3]
-        else:
-            name = 'RL1'
-            state = self.face(**payload)
-            last, actions = self.valid_actions(**payload)
-            action = self.choose(payload['role_id'], state, actions)
+        # if min_left <= 7:
+        #     name = 'MCTS'
+        #     action = mcts(payload)
+        #     last_taken = payload['last_taken']
+        #     last = last_taken[(payload['role_id'] - 1 + 3) % 3]
+        #     if not last:
+        #         last = last_taken[(payload['role_id'] - 2 + 3) % 3]
+        # else:
+        name = 'RL1'
+        state = self.face(**payload)
+        last, actions = self.valid_actions(**payload)
+        action = self.choose(payload['role_id'], state, actions)
         end_time = time.time()
         msg = (('\n\t【{0}】使用模型{1}，响应耗时{2:.2f}ms\n'
                 '\t【{0}】桌上的牌：{3}\n'
