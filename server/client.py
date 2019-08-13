@@ -61,5 +61,5 @@ record = {
         '2': 0,
     }
 }
-res = requests.post('http://localhost:5000/', json=payload2)
+res = requests.post('http://117.78.4.26:5000/', json=payload2)
 print(json.loads(res.content))

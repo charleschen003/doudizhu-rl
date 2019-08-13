@@ -1,4 +1,4 @@
-import mcts.r
+from envi import r
 from mcts.evaluator import cards_value
 import numpy as np
 
@@ -47,7 +47,7 @@ def get_moves(handcards, lastcards):
     rlastcards = list(tem.values())
 
     moves = []
-    rmoves = mcts.r.get_moves(rhandcards, rlastcards)
+    rmoves = r.get_moves(rhandcards, rlastcards)
 
     length = len(rmoves)
     if length > 10:
