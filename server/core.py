@@ -82,7 +82,7 @@ class Predictor:
         #     last = last_taken[(payload['role_id'] - 1 + 3) % 3]
         #     if not last:
         #         last = last_taken[(payload['role_id'] - 2 + 3) % 3]
-        if min_left <= 10:
+        if min_left <= 7:
             name = 'MCTS'
             action = mcts(payload)
             last_taken = payload['last_taken']
