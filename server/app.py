@@ -34,10 +34,11 @@ class Record(db.Model):
 
 
 def get_res(payload):
-    for key in ['history', 'last_taken', 'left']:
-        payload[key][0] = payload[key].pop('0')
-        payload[key][1] = payload[key].pop('1')
-        payload[key][2] = payload[key].pop('2')
+    for key in ['history', 'last_taken', 'left', 'hand_card']:
+        if key in payload:
+            payload[key][0] = payload[key].pop('0')
+            payload[key][1] = payload[key].pop('1')
+            payload[key][2] = payload[key].pop('2')
     debug = payload.pop('debug', False)
     res = ai.act(payload)
     app.logger.debug(res['msg'])
