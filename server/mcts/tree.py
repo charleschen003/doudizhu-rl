@@ -1,7 +1,7 @@
 import numpy as np
-from game.engine import Card
 from mcts.get_moves import get_moves
 from copy import copy
+
 
 class Node(object):
     def __init__(self, parent, state):
@@ -94,7 +94,7 @@ class State(object):
             tmp = valid_moves[i].copy()
         move = []
         next_next_card = self.my_card.copy()
-        for k in Card.all_card_name:
+        for k in [str(i) for i in range(3, 14)] + ['1', '2', '14', '15']:
             move.extend([int(k)] * tmp.get(k, 0))
             next_next_card[k] -= tmp.get(k, 0)
 
@@ -122,7 +122,7 @@ class State(object):
 
     @staticmethod
     def is_buchu(move):
-        for k in Card.all_card_name:
+        for k in [str(i) for i in range(3, 14)] + ['1', '2', '14', '15']:
             if move.get(k) != 0:
                 return False
         return True

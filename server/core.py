@@ -4,7 +4,7 @@ import numpy as np
 import server.config as conf
 from envi import r, Env
 from server.CFR import final_card
-# from server.mcts.interface import mcts
+from server.mcts.interface import mcts
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
