@@ -75,14 +75,14 @@ class Predictor:
         start_time = time.time()
         left = sum(payload['left'].values())
         min_left = min(payload['left'].values())
-        if left <= 6:
-            name = 'CFR'
-            action = final_card(payload)
-            last_taken = payload['last_taken']
-            last = last_taken[(payload['role_id'] - 1 + 3) % 3]
-            if not last:
-                last = last_taken[(payload['role_id'] - 2 + 3) % 3]
-        elif min_left <= 10:
+        # if left <= 6:
+        #     name = 'CFR'
+        #     action = final_card(payload)
+        #     last_taken = payload['last_taken']
+        #     last = last_taken[(payload['role_id'] - 1 + 3) % 3]
+        #     if not last:
+        #         last = last_taken[(payload['role_id'] - 2 + 3) % 3]
+        if min_left <= 10:
             name = 'MCTS'
             action = mcts(payload)
             last_taken = payload['last_taken']
