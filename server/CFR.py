@@ -67,33 +67,34 @@ class GameStateBase:  # 游戏状态父类
 
     def visualization(self):  # 用来观看所生成的所有局面
         if self.is_terminal:
-            print("胜利玩家：", (self.to_move - 1) % 3, "初始发牌状态:", self.initial_cards)
-            print("出牌过程:", self.information_set[1:], "\n")
+            pass
+            # print("胜利玩家：", (self.to_move - 1) % 3, "初始发牌状态:", self.initial_cards)
+            # print("出牌过程:", self.information_set[1:], "\n")
         else:
             for child in self.children:
                 self.children[child].visualization()
 
 
 class ChanceGameState(GameStateBase):  # 机会结点（初始发牌） 继承GameStateBase
-    def __init__(self, actions, first_to_move, last_move=[0] * 15):
+    def __init__(self, actions, first_to_move, last_move=[0] * 15, last_valid_action_pid="CHANCE"):
         """
-            actions传入的是发牌之后所有有可能的手牌状态    
+            actions传入的是发牌之后所有有可能的手牌状态
                 格式[ [第一种可能的每人手牌状态] , [第二种可能的每人手牌状态] , …… , [最后一种可能的每人手牌状态]]
-                其中每一种可能的每人手牌状态的格式是： [ [位置1的初始手牌] , [位置2的初始手牌] , [位置3的初始手牌] ] 
+                其中每一种可能的每人手牌状态的格式是： [ [位置1的初始手牌] , [位置2的初始手牌] , [位置3的初始手牌] ]
                 其中[位置1的初始手牌]的格式是一个 15维list
             first_to_move传入的是chance node之后第一个行动的玩家是谁
             last_move为chance node之前上一个有效出牌 默认为没有（即下一个玩家first_to_move自由出牌）
-            
+
         """
         # print("chancenode actions：",actions)
         super().__init__(parent=None, to_move="CHANCE", actions=actions)  # to_move 为特殊名“CHANCE” actions为所有发牌的可能
 
-        ###################   构造孩子结点部分   ###################################### 
+        ###################   构造孩子结点部分   ######################################
         self.children = {  # 孩子结点是一个字典，key是可能的每人手牌情况，value是对应的孩子结点（PlayerMoveGameState类的实例）
             hash_actions(cards): PlayerMoveGameState(
-                # 参数分别是 parent , to_move, actions_history , initial_cards , cards , actions , last_action
+                # 参数分别是 parent , to_move, actions_history , initial_cards , cards , actions , last_valid_action, last_valid_action_pid
                 self, first_to_move, [], cards, cards, get_moves_new(cards[first_to_move], last_move), last_move,
-                "CHANCE"
+                last_valid_action_pid
             ) for cards in self.actions
         }
         ######################################################################################################
@@ -102,7 +103,10 @@ class ChanceGameState(GameStateBase):  # 机会结点（初始发牌） 继承Ga
 
         self.is_terminal = False
 
-        self.chance_prob = 1. / len(self.children)  # 设置发牌产生的每种结果的可能性 
+        self.chance_prob = 1. / len(self.children)  # 设置发牌产生的每种结果的可能性
+
+    def sample_one(self):
+        return random.choice(list(self.children.values()))
 
     def sample_one(self):
         return random.choice(list(self.children.values()))
@@ -186,9 +190,9 @@ class PlayerMoveGameState(GameStateBase):  # 玩家行动结点 继承GameStateB
             }
         else:
             self.children = {}
-        ########################################################################### 
+        ###########################################################################
 
-        ###################   构造信息集部分   ###################################### 
+        ###################   构造信息集部分   ######################################
         # 构造信息集（针对的是当前玩家to_move） 该结点（状态）所处在的信息集
         # 构造信息集的第一项 ini_card 指的是本回合行动的玩家最初的手牌
         if self.to_move == 0:  # 当前回合是玩家0行动（所以构造的是针对玩家0的信息集）
@@ -203,7 +207,7 @@ class PlayerMoveGameState(GameStateBase):  # 玩家行动结点 继承GameStateB
             self.information_set += [history]
 
         # print("信息集：",self.information_set)
-        ###########################################################################     
+        ###########################################################################
 
 
 def init_sigma(node, output=None):  # 初始化策略：输入一个结点（一般是根节点） 然后输出从该结点开始直到最深 所有信息集的初始策略（随机策略）
@@ -263,7 +267,8 @@ class CounterfactualRegretMinimizationBase:
                 self.cumulative_regrets[i].keys())
             after_change = self.sigma[i][a]
             if abs(after_change - before_change) > 1e-3:
-                print("策略修正 ", after_change - before_change)
+                pass
+                # print("策略修正 ", after_change - before_change)
             # print("_update_sigma后的某策略：",self.sigma[i][a])
 
     def _cumulate_cfr_regret(self, information_set, action, regret):
@@ -290,7 +295,7 @@ class CounterfactualRegretMinimizationBase:
                 return state.chance_prob * sum(
                     [self._cfr_utility_recursive(outcome, reach_a, reach_b, reach_c) for outcome in chance_outcomes])
 
-        # 如果是游戏中间状态结点 计算该结点cfr效用 （sum up all utilities for playing actions in our game state） 
+        # 如果是游戏中间状态结点 计算该结点cfr效用 （sum up all utilities for playing actions in our game state）
         value = 0.
         for action in state.actions:
             sigma_info = self.sigma[hash_actions(state.information_set)]
@@ -348,7 +353,7 @@ class VanillaCFR(CounterfactualRegretMinimizationBase):
 
     def run(self, iterations=1):
         for _ in range(0, iterations):
-            print("第", _ + 1, "轮开始", end=" ")
+            # print("第", _ + 1, "轮开始", end=" ")
             time_start = time.time()
 
             self._cfr_utility_recursive(self.root, 1, 1, 1)
@@ -356,13 +361,13 @@ class VanillaCFR(CounterfactualRegretMinimizationBase):
             self.__update_sigma_recursively(self.root)
 
             time_end = time.time()
-            print('本轮结束 总用时：', time_end - time_start)
+            # print('本轮结束 总用时：', time_end - time_start)
 
     def __update_sigma_recursively(self, node):
         # stop traversal at terminal node
         if node.is_terminal:
             return
-        # 忽略chance node 
+        # 忽略chance node
         if not node.is_chance():  # 如果该结点不是CHANCE node
             self._update_sigma(node.information_set)
         # go to subtrees
@@ -377,11 +382,11 @@ class ChanceSamplingCFR(CounterfactualRegretMinimizationBase):
 
     def run(self, iterations=1):
         for _ in range(0, iterations):
-            print("第", _ + 1, "轮开始")
+            # print("第", _ + 1, "轮开始")
             time_start = time.time()
             self._cfr_utility_recursive(self.root, 1, 1, 1)
             time_end = time.time()
-            print('本轮结束 总用时：', time_end - time_start)
+            # print('本轮结束 总用时：', time_end - time_start)
 
 
 # 余冠一
@@ -418,11 +423,14 @@ def deal(card_n, remainder, cards=[[0] * 15] * 3):  # 为了生成所有发牌�
     return output
 
 
-def initiate_game(person, card, first_to_move, last_move=[0] * 15):
+def initiate_game(person, card, first_to_move, last_move=[0] * 15, last_valid_action_pid="CHANCE"):
+    """
+        根据输入信息 输出训练后得出的策略
+    """
     cards_dealings = deal(person, card)
-    testgame = ChanceGameState(cards_dealings, first_to_move, last_move)
+    testgame = ChanceGameState(cards_dealings, first_to_move, last_move, last_valid_action_pid)
     hahaha = VanillaCFR(testgame)
-    hahaha.run(10)
+    hahaha.run(8)
     return hahaha.sigma
 
 
@@ -462,7 +470,51 @@ payload1 = {
     },
     'debug': False,  # 是否返回debug
 }
+
+payload2 = {
+    'role_id': 1,  # 0代表地主上家，1代表地主，2代表地主下家
+    'last_taken': {  # 更改处
+        0: [],
+        1: [],
+        2: [],
+    },
+    'cur_cards': [7,8,12],  # 无需保持顺序
+    'history': {  # 各家走过的牌的历史The environment
+        0: [14,15,15,15,12,12,12,7,7,7,8,8,8],
+        1: [3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,9,9,9,9,10,10,10,10],
+        2: [11,11,11,11,13,13,13,13,16,17],
+    },
+    'left': {  # 各家剩余的牌
+        0: 2,
+        1: 3,
+        2: 2,
+    },
+    'debug': False,  # 是否返回debug
+}
+
+
+payload3 = {
+        'role_id': 1, 
+        'last_taken': {0: [14, 14], 1: [], 2: [8, 8]}, 
+        'cur_cards': [8], 
+        'history': {
+                0: [13, 16, 3, 7, 7, 7, 12, 14, 4, 4, 10, 10, 6, 6, 14, 14], 
+                1: [4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 4, 6, 15, 15, 15, 11, 13, 9, 9], 
+                2: [9, 10, 11, 12, 13, 9, 15, 17, 3, 3, 3, 11, 8, 8]
+                }, 
+        'left': {0: 1, 1: 1, 2: 3}, 
+        'debug': True}
 """
+
+
+def yq_outcard(string):
+    # 输入 110000000000000'  输出 [3,3]
+    output = []
+    for i in range(0, 15):
+        number = int(string[i])
+        for j in range(number):
+            output += [i + 3]
+    return output
 
 
 def final_card(payload):
@@ -471,15 +523,20 @@ def final_card(payload):
     if payload['last_taken'][(id - 1) % 3] == []:  # 上家为空
         if payload['last_taken'][(id - 2) % 3] == []:  # 上上家为空
             last_move = [0] * 15
+            last_valid_action_pid = first_to_move
         else:
             last_move = card_change(payload['last_taken'][(id - 2) % 3])
+            last_valid_action_pid = (first_to_move - 2) % 3
     else:
         last_move = card_change(payload['last_taken'][(id - 1) % 3])
+        last_valid_action_pid = (first_to_move - 1) % 3
     person = [payload['left'][1], payload['left'][2], payload['left'][0]]
     card = list(np.array([4] * 13 + [1, 1]) - np.array(
         card_change(payload['history'][0] + payload['history'][1] + payload['history'][2])))
-    sigma = initiate_game(person, card, first_to_move, last_move)
+    sigma = initiate_game(person, card, first_to_move, last_move, last_valid_action_pid)
     information_set = hash_card(card_change(payload['cur_cards'])) + " "
-    return choose(information_set, sigma)
+    return yq_outcard(choose(information_set, sigma))
 
-# final_card(payload1)
+# print(final_card(payload3))
+# print(final_card(payload1))
+# print(final_card(payload2))
