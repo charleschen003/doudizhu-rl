@@ -1,10 +1,11 @@
 import time
+import json
 import torch
 import numpy as np
+import requests
 import server.config as conf
 from envi import r, Env
 from server.CFR import final_card
-from server.mcts.interface import mcts
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -73,27 +74,28 @@ class Predictor:
         if not payload['cur_cards']:
             return {'msg': '无手牌', 'status': False, 'data': []}
         start_time = time.time()
-        # left = sum(payload['left'].values())
-        # min_left = min(payload['left'].values())
-        # if left <= 6:
-        #     name = 'CFR'
-        #     action = final_card(payload)
-        #     last_taken = payload['last_taken']
-        #     last = last_taken[(payload['role_id'] - 1 + 3) % 3]
-        #     if not last:
-        #         last = last_taken[(payload['role_id'] - 2 + 3) % 3]
-        # if min_left <= 7:
-        #     name = 'MCTS'
-        #     action = mcts(payload)
-        #     last_taken = payload['last_taken']
-        #     last = last_taken[(payload['role_id'] - 1 + 3) % 3]
-        #     if not last:
-        #         last = last_taken[(payload['role_id'] - 2 + 3) % 3]
-        # else:
-        name = 'RL1'
-        state = self.face(**payload)
-        last, actions = self.valid_actions(**payload)
-        action = self.choose(payload['role_id'], state, actions)
+        total_left = sum(payload['left'].values())
+        self_left = len(payload['cur_cards'])
+        if total_left <= 5:
+            name = 'CFR'
+            action = final_card(payload)
+            last_taken = payload['last_taken']
+            last = last_taken[(payload['role_id'] - 1 + 3) % 3]
+            if not last:
+                last = last_taken[(payload['role_id'] - 2 + 3) % 3]
+        if self_left <= 7:
+            name = 'MCTS'
+            res = requests.post('http://40.115.138.207:5000/', json=payload)
+            action = json.loads(res.content)['data']
+            last_taken = payload['last_taken']
+            last = last_taken[(payload['role_id'] - 1 + 3) % 3]
+            if not last:
+                last = last_taken[(payload['role_id'] - 2 + 3) % 3]
+        else:
+            name = 'RL1'
+            state = self.face(**payload)
+            last, actions = self.valid_actions(**payload)
+            action = self.choose(payload['role_id'], state, actions)
         end_time = time.time()
         msg = (('\n\t【{0}】使用模型{1}，响应耗时{2:.2f}ms\n'
                 '\t【{0}】桌上的牌：{3}\n'
