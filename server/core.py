@@ -76,14 +76,14 @@ class Predictor:
         start_time = time.time()
         total_left = sum(payload['left'].values())
         self_left = len(payload['cur_cards'])
-        if total_left <= 5:
+        if total_left <= 6:
             name = 'CFR'
             action = final_card(payload)
             last_taken = payload['last_taken']
             last = last_taken[(payload['role_id'] - 1 + 3) % 3]
             if not last:
                 last = last_taken[(payload['role_id'] - 2 + 3) % 3]
-        if self_left <= 6:
+        if self_left <= 8:
             name = 'MCTS'
             res = requests.post('http://40.115.138.207:5000/', json=payload)
             action = json.loads(res.content)['data']
