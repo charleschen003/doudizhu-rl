@@ -77,7 +77,8 @@ class Predictor:
         start_time = time.time()
         total_left = sum(payload['left'].values())
         self_left = len(payload['cur_cards'])
-        if total_left >= 40:
+        max_left = min(payload['left'].values())
+        if max_left >= 14:
             name = 'Rule'
             action = choose(payload)
             action = [int(i) for i in self.mock_env.arr2cards(action)]
