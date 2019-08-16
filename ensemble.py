@@ -343,10 +343,9 @@ class Game:
                         # print(payload)
                         while True:
                             try:
-                                res = requests.post('http://117.78.4.26:5000', json=payload)
+                                res = requests.post('http://127.0.0.1:5000', json=payload)
                                 res = json.loads(res.content)
                             except json.decoder.JSONDecodeError:
-                                print(payload)
                                 print('Server break, retry 3s later')
                                 exit(0)
                                 time.sleep(3)

@@ -118,4 +118,4 @@ def e_ensemble():
 
 
 # if __name__ == '__main__':
-res = e_ensemble()  # 138+29+73+6：胜利81+15+48+4
+res = e_ensemble()  # 246：胜利148

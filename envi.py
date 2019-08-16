@@ -9,7 +9,9 @@ from collections import Counter
 
 sys.path.insert(0, conf.ENV_DIR)
 import r
+import env
 from env import Env as CEnv
+
 
 
 class Env(CEnv):

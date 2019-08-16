@@ -6,6 +6,7 @@ import requests
 import server.config as conf
 from envi import r, Env
 from server.CFR import final_card
+from server.rule_utils.rule_based_model import choose
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -76,7 +77,15 @@ class Predictor:
         start_time = time.time()
         total_left = sum(payload['left'].values())
         self_left = len(payload['cur_cards'])
-        if total_left <= 6:
+        if total_left >= 40:
+            name = 'Rule'
+            action = choose(payload)
+            action = [int(i) for i in self.mock_env.arr2cards(action)]
+            last_taken = payload['last_taken']
+            last = last_taken[(payload['role_id'] - 1 + 3) % 3]
+            if not last:
+                last = last_taken[(payload['role_id'] - 2 + 3) % 3]
+        elif total_left <= 6:
             name = 'CFR'
             action = final_card(payload)
             last_taken = payload['last_taken']
