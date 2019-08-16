@@ -13,7 +13,6 @@ import env
 from env import Env as CEnv
 
 
-
 class Env(CEnv):
     def __init__(self, debug=False, seed=None):
         if seed:
