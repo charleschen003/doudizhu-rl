@@ -94,5 +94,28 @@ def e0808():
     return win
 
 
+def e_ensemble():
+    # 纯RL，58.7%，1000把
+    from ensemble import Game
+    net_dict = {
+        'lord': None,
+        'down': None,
+        'up': None,
+    }
+    dqn_dict = {
+        'lord': None,
+        'down': None,
+        'up': None,
+    }
+    model_dict = {
+        'lord': None,
+        'down': None,
+        'up': None,
+    }
+    win = Game.ensemble_compete(EnvCooperationSimplify, net_dict, dqn_dict, model_dict,
+                                total=1000, print_every=1, debug=False)
+    return win
+
+
 # if __name__ == '__main__':
-res = e0808()
+res = e_ensemble()  # 138+29+73+6：胜利81+15+48+4
