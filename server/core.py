@@ -92,14 +92,14 @@ class Predictor:
             last = last_taken[(payload['role_id'] - 1 + 3) % 3]
             if not last:
                 last = last_taken[(payload['role_id'] - 2 + 3) % 3]
-        elif self_left <= 8:
-            name = 'MCTS'
-            res = requests.post('http://40.115.138.207:5000/', json=payload)
-            action = json.loads(res.content)['data']
-            last_taken = payload['last_taken']
-            last = last_taken[(payload['role_id'] - 1 + 3) % 3]
-            if not last:
-                last = last_taken[(payload['role_id'] - 2 + 3) % 3]
+        # elif self_left <= 8:
+        #     name = 'MCTS'
+        #     res = requests.post('http://40.115.138.207:5000/', json=payload)
+        #     action = json.loads(res.content)['data']
+        #     last_taken = payload['last_taken']
+        #     last = last_taken[(payload['role_id'] - 1 + 3) % 3]
+        #     if not last:
+        #         last = last_taken[(payload['role_id'] - 2 + 3) % 3]
         else:
             name = 'RL1'
             state = self.face(**payload)
